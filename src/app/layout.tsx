@@ -7,7 +7,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Noor — Islamic Lifestyle & Modest Fashion',
+  title: 'Our Sunnah Lifestyle & Modest Fashion',
   description: 'Premium Islamic lifestyle brand offering modest fashion, prayer essentials, and home decor crafted with intention and elegance.',
 };
 

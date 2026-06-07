@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-emerald: #1B4332;
+    --color-emerald-light: #2D6A4F;
+    --color-beige: #F5EFE6;
+    --color-cream: #FAF8F4;
+    --color-gold: #B8975A;
+    --color-charcoal: #1C1C1C;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: 'Jost', system-ui, sans-serif;
+    background-color: #FAF8F4;
+    color: #1C1C1C;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 400;
+  }
+
+  ::selection {
+    background-color: rgba(27, 67, 50, 0.15);
+    color: #1B4332;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #FAF8F4;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #B8975A;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #D4AF6A;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-8 py-3.5 bg-brand-emerald text-brand-cream text-label uppercase tracking-widest font-sans font-medium
+           transition-all duration-500 ease-luxury hover:bg-brand-emerald-light hover:shadow-gold
+           relative overflow-hidden;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center gap-2 px-8 py-3.5 border border-brand-gold text-brand-gold text-label uppercase tracking-widest font-sans font-medium
+           transition-all duration-500 ease-luxury hover:bg-brand-gold hover:text-brand-cream;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 text-label uppercase tracking-widest font-sans font-medium text-brand-charcoal
+           relative after:absolute after:bottom-0 after:left-0 after:h-px after:bg-brand-gold after:w-0
+           hover:after:w-full after:transition-all after:duration-500;
+  }
+
+  .section-label {
+    @apply text-label uppercase tracking-widest text-brand-gold font-sans font-medium mb-3;
+  }
+
+  .section-title {
+    @apply font-serif text-brand-charcoal leading-tight;
+  }
+
+  .product-card {
+    @apply group relative bg-white overflow-hidden cursor-pointer
+           transition-all duration-700 ease-luxury hover:shadow-card-hover;
+  }
+
+  .product-card-img {
+    @apply w-full h-full object-cover transition-all duration-700 ease-luxury
+           group-hover:scale-105;
+  }
+
+  .nav-link {
+    @apply text-label uppercase tracking-widest font-sans font-medium text-brand-charcoal/80
+           relative after:absolute after:bottom-0 after:left-0 after:h-px after:bg-brand-gold after:w-0
+           hover:text-brand-charcoal hover:after:w-full after:transition-all after:duration-300
+           transition-colors duration-300;
+  }
+
+  .gold-divider {
+    @apply w-12 h-px bg-brand-gold;
+  }
+
+  .geometric-ornament {
+    @apply inline-block w-6 h-6 border border-brand-gold rotate-45 opacity-60;
+  }
+}
+
+@layer utilities {
+  .ease-luxury {
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .bg-grain {
+    position: relative;
+  }
+
+  .bg-grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .animate-delay-100 { animation-delay: 0.1s; }
+  .animate-delay-200 { animation-delay: 0.2s; }
+  .animate-delay-300 { animation-delay: 0.3s; }
+  .animate-delay-400 { animation-delay: 0.4s; }
+  .animate-delay-500 { animation-delay: 0.5s; }
+  .animate-delay-600 { animation-delay: 0.6s; }
+  .animate-delay-700 { animation-delay: 0.7s; }
+
+  .opacity-0-init {
+    opacity: 0;
+  }
+}
+
+/* Geometric Islamic pattern overlay */
+.islamic-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23B8975A' fill-opacity='0.06'%3E%3Cpath d='M30 0l5.196 9H24.804L30 0zM30 60l5.196-9H24.804L30 60zM0 30l9-5.196v10.392L0 30zM60 30l-9-5.196v10.392L60 30zM15 15l5.196 9H9.804L15 15zM45 15l5.196 9H39.804L45 15zM15 45l5.196-9H9.804L15 45zM45 45l5.196-9H39.804L45 45z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Smooth image loading */
+img {
+  transition: opacity 0.5s ease;
+}
+
+img[data-loaded="false"] {
+  opacity: 0;
+}
+
+/* Custom gold shimmer for CTA buttons */
+.btn-shimmer {
+  background: linear-gradient(
+    105deg,
+    #B8975A 0%,
+    #D4AF6A 45%,
+    #B8975A 55%,
+    #B8975A 100%
+  );
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}

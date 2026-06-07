@@ -1,4 +1,7 @@
+'use client';
+
 import { useRef, useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
 import { ArrowRight, Mail } from 'lucide-react';
 
 export default function Newsletter() {
@@ -16,7 +19,7 @@ export default function Newsletter() {
     return () => observer.disconnect();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (email) {
       setSubmitted(true);

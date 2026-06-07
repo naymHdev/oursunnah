@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Search, Menu, X, Heart, ChevronDown } from 'lucide-react';
 

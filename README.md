@@ -1,6 +1,6 @@
 # E-Commerce Website Project
 
-## 🌟 Project Overview
+## 🌟 Our Sunnah
 
 This is a modern e-commerce website built with Next.js, TypeScript, and Tailwind CSS. The project provides a clean and responsive user interface with essential features like navigation, product display, testimonials, and a newsletter subscription.
 

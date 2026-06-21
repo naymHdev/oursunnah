@@ -12,6 +12,7 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
   JWT_REFRESH_EXPIRES_IN: z.string().default("30d"),
   CLIENT_URL: z.string().default("http://localhost:3000"),
+  INTERNAL_API_SECRET: z.string().min(1, "INTERNAL_API_SECRET is required"),
 });
 
 const parsed = envSchema.safeParse(process.env);

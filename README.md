@@ -28,6 +28,7 @@ pnpm install
 # 2. create env files (each one is separate, see "Env files" section below)
 cp apps/api/.env.example apps/api/.env
 cp packages/database/.env.example packages/database/.env
+cp apps/web/.env.example apps/web/.env
 
 # 3. fill in real values in both .env files (DATABASE_URL, JWT secrets, etc.)
 
@@ -41,22 +42,52 @@ pnpm dev
 
 ---
 
-## Env files (important — there are TWO)
+## Env files (important — there are THREE)
 
 Prisma CLI looks for `.env` inside the package that contains `schema.prisma`.
-Express looks for `.env` inside its own app folder. So both need `DATABASE_URL`:
+Express looks for `.env` inside its own app folder. Next.js looks for `.env`
+in its own app folder too. So all three need values:
 
 | File | Used by | Required vars |
 |---|---|---|
-| `apps/api/.env` | Express server | `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `PORT`, `CLIENT_URL` |
+| `apps/api/.env` | Express server | `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `PORT`, `CLIENT_URL`, `INTERNAL_API_SECRET` |
 | `packages/database/.env` | Prisma CLI (migrate/studio/generate) | `DATABASE_URL` |
+| `apps/web/.env` | Next.js (NextAuth + API calls) | `AUTH_SECRET`, `NEXTAUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `API_URL`, `INTERNAL_API_SECRET` |
 
-Keep `DATABASE_URL` identical in both files.
+Keep `DATABASE_URL` identical between `apps/api/.env` and `packages/database/.env`.
 
-Generate strong JWT secrets:
+Keep `INTERNAL_API_SECRET` **identical** between `apps/api/.env` and `apps/web/.env`
+— this is the shared secret that lets Next.js call Express's social-login-sync
+endpoint without exposing it to the public internet.
+
+Generate strong secrets:
 ```bash
 openssl rand -hex 32
 ```
+
+For `AUTH_SECRET` you can also run:
+```bash
+cd apps/web && pnpm dlx auth secret
+```
+
+### Setting up Google/Facebook OAuth credentials
+
+**Google** — https://console.cloud.google.com/ → create a project → APIs &
+Services → Credentials → Create Credentials → OAuth client ID → Web
+application → add redirect URI:
+```
+http://localhost:3000/api/auth/callback/google
+```
+
+**Facebook** — https://developers.facebook.com/apps/ → Create App →
+Facebook Login → Settings → add Valid OAuth Redirect URI:
+```
+http://localhost:3000/api/auth/callback/facebook
+```
+
+Apple Sign In isn't wired up yet (requires a paid Apple Developer account) —
+the provider map in `apps/web/src/auth.ts` is built to make adding it later
+a small diff, not a rewrite.
 
 ---
 
@@ -147,6 +178,15 @@ the role has no privileges on it. Check your local Postgres credentials.
 
 **Prisma Client out of sync after pulling**
 → Run `pnpm db:generate` again.
+
+**Social login redirects but fails with "Failed to sync social login with backend"**
+→ `INTERNAL_API_SECRET` doesn't match between `apps/web/.env` and
+`apps/api/.env`, or the Express server isn't running, or `API_URL` in
+`apps/web/.env` is wrong.
+
+**Google/Facebook login shows a redirect_uri_mismatch error**
+→ The redirect URI registered in the Google/Facebook developer console
+doesn't exactly match `http://localhost:3000/api/auth/callback/<provider>`.
 
 ---
 

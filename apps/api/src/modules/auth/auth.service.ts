@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
-import type { LoginInput, RegisterInput } from "@our-sunnah/validation";
+import type { LoginInput, RegisterInput, SocialLoginInput } from "@our-sunnah/validation";
+import type { AuthProvider } from "@our-sunnah/database";
 import { ApiError } from "../../utils/ApiError.js";
 import { signAccessToken, signRefreshToken } from "../../utils/jwt.js";
 import { authRepository } from "./auth.repository.js";
@@ -52,5 +53,42 @@ export const authService = {
 
   logout: async (refreshToken: string) => {
     await authRepository.deleteRefreshToken(refreshToken);
+  },
+
+  socialLogin: async (input: SocialLoginInput) => {
+    const provider = input.provider as AuthProvider;
+
+    const existingSocialAccount = await authRepository.findSocialAccount(
+      provider,
+      input.providerId
+    );
+
+    if (existingSocialAccount) {
+      const tokens = await generateTokens(existingSocialAccount.user.id);
+      return {
+        user: {
+          id: existingSocialAccount.user.id,
+          name: existingSocialAccount.user.name,
+          email: existingSocialAccount.user.email,
+        },
+        ...tokens,
+      };
+    }
+
+    // No social link yet — check if a user already exists with this email
+    // (e.g. they registered with credentials before), and link the account.
+    let user = await authRepository.findUserByEmail(input.email);
+
+    if (!user) {
+      user = await authRepository.createUserFromSocial({
+        name: input.name,
+        email: input.email,
+      });
+    }
+
+    await authRepository.linkSocialAccount(user.id, provider, input.providerId);
+
+    const tokens = await generateTokens(user.id);
+    return { user: { id: user.id, name: user.name, email: user.email }, ...tokens };
   },
 };

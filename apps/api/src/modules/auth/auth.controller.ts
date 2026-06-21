@@ -32,4 +32,10 @@ export const authController = {
     res.clearCookie("refreshToken", { path: "/api/auth" });
     ApiResponse.success(res, 200, "Logged out successfully");
   }),
+
+  socialLogin: catchAsync(async (req: Request, res: Response) => {
+    const { accessToken, refreshToken, user } = await authService.socialLogin(req.body);
+    res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_OPTIONS);
+    ApiResponse.success(res, 200, "Social login successful", { user, accessToken });
+  }),
 };

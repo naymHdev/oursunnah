@@ -190,6 +190,37 @@ doesn't exactly match `http://localhost:3000/api/auth/callback/<provider>`.
 
 ---
 
+## API structure
+
+`apps/api` follows a controller → service → prisma pattern (no repository
+layer):
+
+```
+src/
+  app.ts                 -> express app setup
+  server.ts              -> http server entry + process safety handlers
+  shared/
+    prisma.ts            -> re-exports the shared Prisma client
+  app/
+    config/env.ts         -> zod-validated environment variables
+    error/                -> AppError, Zod/Prisma error simplifiers
+    middleware/            -> auth, validateRequest, globalErrorHandler, notFound
+    interface/             -> shared TS types (error sources, etc.)
+    modules/
+      auth/
+        auth.controller.ts
+        auth.service.ts
+        auth.routes.ts
+        auth.validation.ts  -> re-exports schemas from @our-sunnah/validation
+    routes/index.ts        -> mounts every module's routes
+    utils/                 -> catchAsync, sendResponse, jwt helpers
+```
+
+All API routes are mounted under `/api/v1` (e.g. `/api/v1/auth/login-account`).
+
+New modules (Product, Cart, Order, etc.) should follow this exact same
+4-file pattern and register themselves in `app/routes/index.ts`.
+
 ## Tech Stack
 
 - **Frontend**: Next.js 15, React 19, Tailwind CSS, shadcn/ui

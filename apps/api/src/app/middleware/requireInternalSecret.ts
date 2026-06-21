@@ -1,5 +1,5 @@
-import type { NextFunction, Request, Response } from "express";
-import { ApiError } from "../utils/ApiError.js";
+import { NextFunction, Request, Response } from "express";
+import AppError from "../error/AppError.js";
 import { env } from "../config/env.js";
 
 /**
@@ -8,12 +8,14 @@ import { env } from "../config/env.js";
  * login on behalf of an already-authenticated OAuth flow), where the
  * caller is trusted infra, not an end user.
  */
-export const requireInternalSecret = (req: Request, _res: Response, next: NextFunction) => {
+const requireInternalSecret = (req: Request, _res: Response, next: NextFunction) => {
   const secret = req.headers["x-internal-secret"];
 
   if (!secret || secret !== env.INTERNAL_API_SECRET) {
-    return next(ApiError.forbidden("Forbidden"));
+    throw new AppError(403, "Forbidden");
   }
 
   next();
 };
+
+export default requireInternalSecret;

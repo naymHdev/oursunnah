@@ -1,23 +1,29 @@
-import express from "express";
+import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { env } from "./config/env.js";
-import { apiRouter } from "./routes/index.js";
-import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
+import router from "./app/routes/index.js";
+import { env } from "./app/config/env.js";
+import notFound from "./app/middleware/notFound.js";
+import globalErrorHandler from "./app/middleware/globalErrorHandler.js";
 
-export const createApp = () => {
-  const app = express();
+const app: Express = express();
 
-  app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
-  app.use(express.json());
-  app.use(cookieParser());
+app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
+app.use(express.json());
+app.use(cookieParser());
 
-  app.get("/health", (_req, res) => res.json({ status: "ok" }));
+app.get("/", (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: "OK",
+    success: true,
+    message: "Our Sunnah API is running",
+    timestamp: new Date().toISOString(),
+  });
+});
 
-  app.use("/api", apiRouter);
+app.use("/api/v1", router);
 
-  app.use(notFoundHandler);
-  app.use(errorHandler);
+app.use(notFound);
+app.use(globalErrorHandler);
 
-  return app;
-};
+export default app;

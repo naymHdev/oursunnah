@@ -33,7 +33,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (account && profile) {
         const provider = PROVIDER_MAP[account.provider];
 
-        const response = await fetch(`${API_URL}/api/auth/social`, {
+        const response = await fetch(`${API_URL}/api/v1/auth/social`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

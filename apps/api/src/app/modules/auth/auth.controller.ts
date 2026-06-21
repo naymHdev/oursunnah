@@ -1,0 +1,66 @@
+import { Request, Response } from "express";
+import catchAsync from "../../utils/catchAsync.js";
+import sendResponse from "../../utils/sendResponse.js";
+import { AuthService } from "./auth.service.js";
+
+const REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/api/v1/auth",
+  maxAge: 30 * 24 * 60 * 60 * 1000,
+};
+
+const createAccount = catchAsync(async (req: Request, res: Response) => {
+  const { accessToken, refreshToken, user } = await AuthService.createAccount(req.body);
+  res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_OPTIONS);
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Account created successfully",
+    data: { user, accessToken },
+  });
+});
+
+const loginAccount = catchAsync(async (req: Request, res: Response) => {
+  const { accessToken, refreshToken, user } = await AuthService.loginAccount(req.body);
+  res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_OPTIONS);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Logged in successfully",
+    data: { user, accessToken },
+  });
+});
+
+const logoutAccount = catchAsync(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.refreshToken;
+  if (refreshToken) {
+    await AuthService.logoutAccount(refreshToken);
+  }
+  res.clearCookie("refreshToken", { path: "/api/v1/auth" });
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Logged out successfully",
+    data: null,
+  });
+});
+
+const socialLogin = catchAsync(async (req: Request, res: Response) => {
+  const { accessToken, refreshToken, user } = await AuthService.socialLogin(req.body);
+  res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_OPTIONS);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Social login successful",
+    data: { user, accessToken },
+  });
+});
+
+export const AuthController = {
+  createAccount,
+  loginAccount,
+  logoutAccount,
+  socialLogin,
+};

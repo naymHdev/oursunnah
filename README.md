@@ -193,6 +193,13 @@ categories manually (or via Prisma Studio: `pnpm db:studio`) since this
 migration doesn't auto-migrate old single-category data into the new
 join table.
 
+**After pulling the Product schema change**
+→ `ProductVariant.label`/`priceDiff` was replaced with a proper
+option/value/variant structure (`ProductOption`, `ProductOptionValue`,
+`ProductVariant.optionValues`) plus a new `ProductAttribute` model for
+flexible specs. Run `pnpm db:migrate` — any test variants made with the
+old `label` field will need to be recreated through the new API.
+
 **Social login redirects but fails with "Failed to sync social login with backend"**
 → `INTERNAL_API_SECRET` doesn't match between `apps/web/.env` and
 `apps/api/.env`, or the Express server isn't running, or `API_URL` in

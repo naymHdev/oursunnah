@@ -184,6 +184,15 @@ the role has no privileges on it. Check your local Postgres credentials.
 client to `packages/database/generated/prisma` (gitignored, not committed).
 Run `pnpm db:generate` once after `pnpm install` to generate it locally.
 
+**After pulling the Category schema change**
+→ `Product.categoryId` was replaced with a many-to-many `categories`
+relation, and `Category` gained a self-relation (`parentId`) for
+unlimited nesting. Run `pnpm db:migrate` to apply it — if you have test
+products with the old single category, you'll need to re-link them to
+categories manually (or via Prisma Studio: `pnpm db:studio`) since this
+migration doesn't auto-migrate old single-category data into the new
+join table.
+
 **Social login redirects but fails with "Failed to sync social login with backend"**
 → `INTERNAL_API_SECRET` doesn't match between `apps/web/.env` and
 `apps/api/.env`, or the Express server isn't running, or `API_URL` in

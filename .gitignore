@@ -36,6 +36,7 @@ dist-ssr
 
 # Prisma
 packages/database/node_modules
+packages/database/generated/
 
 # Misc
 node_modules/

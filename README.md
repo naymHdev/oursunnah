@@ -179,6 +179,11 @@ the role has no privileges on it. Check your local Postgres credentials.
 **Prisma Client out of sync after pulling**
 → Run `pnpm db:generate` again.
 
+**Prisma generated client not found (after a fresh pull)**
+→ We use Prisma 7's new `prisma-client` generator, which outputs the
+client to `packages/database/generated/prisma` (gitignored, not committed).
+Run `pnpm db:generate` once after `pnpm install` to generate it locally.
+
 **Social login redirects but fails with "Failed to sync social login with backend"**
 → `INTERNAL_API_SECRET` doesn't match between `apps/web/.env` and
 `apps/api/.env`, or the Express server isn't running, or `API_URL` in

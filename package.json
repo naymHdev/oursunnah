@@ -1,34 +1,24 @@
 {
-  "name": "our_sunna_website",
+  "name": "our-sunnah",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
-    "lucide-react": "^0.511.0",
-    "next": "^15.3.4",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=web",
+    "dev:api": "turbo run dev --filter=api",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "db:generate": "pnpm --filter @our-sunnah/database run generate",
+    "db:migrate": "pnpm --filter @our-sunnah/database run migrate",
+    "db:studio": "pnpm --filter @our-sunnah/database run studio"
   },
   "devDependencies": {
-    "@eslint/js": "^9.9.1",
-    "@types/node": "^22.15.30",
-    "@types/react": "^19.1.5",
-    "@types/react-dom": "^19.1.5",
-    "autoprefixer": "^10.4.18",
-    "eslint": "^9.9.1",
-    "eslint-config-next": "^15.3.4",
-    "globals": "^15.9.0",
-    "postcss": "^8.4.35",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5.5.3",
-    "typescript-eslint": "^8.3.0"
+    "turbo": "^2.3.3",
+    "typescript": "^5.5.3"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
   }
 }

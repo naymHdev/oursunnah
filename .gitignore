@@ -22,3 +22,22 @@ dist-ssr
 *.sw?
 .env
 .vercel
+
+# Next build
+.next/
+.turbo/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Prisma
+packages/database/node_modules
+
+# Misc
+node_modules/
+dist/
+build/

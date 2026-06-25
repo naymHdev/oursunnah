@@ -3,12 +3,13 @@ import { ProductController } from "./product.controller.js";
 import { ProductValidation } from "./product.validation.js";
 import validateRequest from "../../middleware/validateRequest.js";
 import auth from "../../middleware/auth.js";
+import optionalAuth from "../../middleware/optionalAuth.js";
 
 const router = Router();
 
 // Public — storefront listing & detail
 router.get("/", ProductController.getProducts);
-router.get("/:slug", ProductController.getProductBySlug);
+router.get("/:slug", optionalAuth(), ProductController.getProductBySlug);
 
 // Protected — TODO: tighten to admin-only once a role field exists on User.
 router.post(

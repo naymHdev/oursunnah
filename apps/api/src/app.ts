@@ -8,6 +8,8 @@ import globalErrorHandler from "./app/middleware/globalErrorHandler.js";
 
 const app: Express = express();
 
+app.set("trust proxy", 1);
+
 app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());

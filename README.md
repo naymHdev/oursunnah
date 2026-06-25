@@ -200,6 +200,13 @@ option/value/variant structure (`ProductOption`, `ProductOptionValue`,
 flexible specs. Run `pnpm db:migrate` — any test variants made with the
 old `label` field will need to be recreated through the new API.
 
+**After pulling the user/session/analytics changes**
+→ `RefreshToken` gained device/location columns and `revokedAt`
+(logout no longer deletes the row — it marks it revoked, so login
+history is preserved). `User` gained `phone`/`avatar`/`gender`/
+`dateOfBirth`. New `ProductView` and `UserCategoryInterest` tables were
+added for behavior tracking. Run `pnpm db:migrate`.
+
 **Social login redirects but fails with "Failed to sync social login with backend"**
 → `INTERNAL_API_SECRET` doesn't match between `apps/web/.env` and
 `apps/api/.env`, or the Express server isn't running, or `API_URL` in

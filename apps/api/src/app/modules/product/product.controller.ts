@@ -3,6 +3,7 @@ import catchAsync from "../../utils/catchAsync.js";
 import sendResponse from "../../utils/sendResponse.js";
 import { ProductService } from "./product.service.js";
 import { ProductValidation } from "./product.validation.js";
+import { AnalyticsService } from "../analytics/analytics.service.js";
 
 const createProduct = catchAsync(async (req: Request, res: Response) => {
   const product = await ProductService.createProduct(req.body);
@@ -28,6 +29,11 @@ const getProducts = catchAsync(async (req: Request, res: Response) => {
 
 const getProductBySlug = catchAsync(async (req: Request, res: Response) => {
   const product = await ProductService.getProductBySlug(req.params.slug);
+
+  AnalyticsService.recordProductView({ userId: req.userId, productId: product.id }).catch(
+    (err) => console.error("Failed to record product view:", err)
+  );
+
   sendResponse(res, {
     statusCode: 200,
     success: true,

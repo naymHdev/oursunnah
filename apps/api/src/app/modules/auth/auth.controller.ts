@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import catchAsync from "../../utils/catchAsync.js";
 import sendResponse from "../../utils/sendResponse.js";
+import { getRequestMeta } from "../../utils/getRequestMeta.js";
 import { AuthService } from "./auth.service.js";
 
 const REFRESH_COOKIE_OPTIONS = {
@@ -12,7 +13,8 @@ const REFRESH_COOKIE_OPTIONS = {
 };
 
 const createAccount = catchAsync(async (req: Request, res: Response) => {
-  const { accessToken, refreshToken, user } = await AuthService.createAccount(req.body);
+  const meta = getRequestMeta(req);
+  const { accessToken, refreshToken, user } = await AuthService.createAccount(req.body, meta);
   res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_OPTIONS);
   sendResponse(res, {
     statusCode: 201,
@@ -23,7 +25,8 @@ const createAccount = catchAsync(async (req: Request, res: Response) => {
 });
 
 const loginAccount = catchAsync(async (req: Request, res: Response) => {
-  const { accessToken, refreshToken, user } = await AuthService.loginAccount(req.body);
+  const meta = getRequestMeta(req);
+  const { accessToken, refreshToken, user } = await AuthService.loginAccount(req.body, meta);
   res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_OPTIONS);
   sendResponse(res, {
     statusCode: 200,
@@ -48,7 +51,8 @@ const logoutAccount = catchAsync(async (req: Request, res: Response) => {
 });
 
 const socialLogin = catchAsync(async (req: Request, res: Response) => {
-  const { accessToken, refreshToken, user } = await AuthService.socialLogin(req.body);
+  const meta = getRequestMeta(req);
+  const { accessToken, refreshToken, user } = await AuthService.socialLogin(req.body, meta);
   res.cookie("refreshToken", refreshToken, REFRESH_COOKIE_OPTIONS);
   sendResponse(res, {
     statusCode: 200,

@@ -16,6 +16,12 @@ enum AuthProvider {
   APPLE
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -40,6 +46,10 @@ model User {
   name          String
   email         String         @unique
   password      String?
+  phone         String?
+  avatar        String?
+  gender        Gender?
+  dateOfBirth   DateTime?
   emailVerified Boolean        @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -50,6 +60,8 @@ model User {
   cart          Cart?
   orders        Order[]
   deviceTokens  DeviceToken[]
+  productViews  ProductView[]
+  categoryInterests UserCategoryInterest[]
 
   @@map("users")
 }
@@ -66,13 +78,26 @@ model SocialAccount {
   @@map("social_accounts")
 }
 
+/// Doubles as a "session" record - one row per login. Kept (not deleted)
+/// on logout via `revokedAt` so login history is preserved.
 model RefreshToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id           String    @id @default(cuid())
+  token        String    @unique
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ipAddress    String?
+  country      String?
+  city         String?
+  deviceType   String?   // mobile | desktop | tablet
+  browser      String?
+  os           String?
+
+  lastActiveAt DateTime  @default(now())
+  revokedAt    DateTime?
+
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
 
   @@map("refresh_tokens")
 }
@@ -115,6 +140,7 @@ model Category {
   children      Category[] @relation("CategoryHierarchy")
 
   products      Product[]  @relation("ProductCategories")
+  userInterests UserCategoryInterest[]
 
   @@map("categories")
 }
@@ -142,6 +168,7 @@ model Product {
   attributes       ProductAttribute[]
   cartItems        CartItem[]
   orderItems       OrderItem[]
+  views            ProductView[]
 
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
@@ -303,4 +330,36 @@ model DeviceToken {
   createdAt DateTime @default(now())
 
   @@map("device_tokens")
+}
+
+// ---------- Behavior tracking ----------
+
+/// Raw log of a product detail page view. userId is nullable so guest
+/// browsing can be tracked too once a guest/anonymous id is added later.
+model ProductView {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  viewedAt  DateTime @default(now())
+
+  @@map("product_views")
+}
+
+/// Pre-aggregated per-user, per-category view counter, updated whenever
+/// a ProductView is recorded. Querying this directly (rather than
+/// aggregating ProductView on the fly) is what makes "Recommended for
+/// you" cheap to compute.
+model UserCategoryInterest {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  viewCount    Int      @default(0)
+  lastViewedAt DateTime @default(now())
+
+  @@unique([userId, categoryId])
+  @@map("user_category_interests")
 }

@@ -24,7 +24,7 @@ const getCategoryTree = catchAsync(async (_req: Request, res: Response) => {
 });
 
 const getCategoryBySlug = catchAsync(async (req: Request, res: Response) => {
-  const result = await CategoryService.getCategoryBySlug(req.params.slug);
+  const result = await CategoryService.getCategoryBySlug(req.params.slug as string);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -34,7 +34,7 @@ const getCategoryBySlug = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateCategory = catchAsync(async (req: Request, res: Response) => {
-  const category = await CategoryService.updateCategory(req.params.id, req.body);
+  const category = await CategoryService.updateCategory(req.params.id as string, req.body);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -44,7 +44,7 @@ const updateCategory = catchAsync(async (req: Request, res: Response) => {
 });
 
 const deleteCategory = catchAsync(async (req: Request, res: Response) => {
-  await CategoryService.deleteCategory(req.params.id);
+  await CategoryService.deleteCategory(req.params.id as string);
   sendResponse(res, {
     statusCode: 200,
     success: true,

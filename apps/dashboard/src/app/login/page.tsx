@@ -13,8 +13,8 @@ export default function LoginPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("naym@mockmail.xyz");
+  const [password, setPassword] = useState("naymUser@Account22");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
@@ -31,7 +31,7 @@ export default function LoginPage() {
         setCredentials({
           user: result.data.user,
           accessToken: result.data.accessToken,
-        })
+        }),
       );
 
       router.replace("/overview");
@@ -50,7 +50,9 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-10">
           <div className="flex items-center gap-2.5 mb-2">
             <Star className="h-5 w-5 text-brand-gold fill-brand-gold" />
-            <span className="font-serif text-2xl text-brand-charcoal">Our Sunnah</span>
+            <span className="font-serif text-2xl text-brand-charcoal">
+              Our Sunnah
+            </span>
           </div>
           <div className="flex items-center gap-3 mt-1">
             <div className="h-px w-10 bg-brand-gold/40" />
@@ -63,7 +65,9 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="bg-white rounded-xl border border-brand-beige-dark shadow-card p-8">
-          <h1 className="font-serif text-2xl text-brand-charcoal mb-1">Sign in</h1>
+          <h1 className="font-serif text-2xl text-brand-charcoal mb-1">
+            Sign in
+          </h1>
           <p className="text-xs text-brand-stone font-sans mb-7 uppercase tracking-widest">
             Access your dashboard
           </p>

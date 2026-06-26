@@ -10,6 +10,7 @@ import { getCategoryTree } from '@/lib/api/server';
 
 export default async function Home() {
   const categories = await getCategoryTree();
+  // console.log("categories_______", categories);
 
   return (
     <div className="min-h-screen bg-brand-cream">

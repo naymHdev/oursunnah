@@ -6,11 +6,14 @@ import Testimonials from '@/components/Testimonials';
 import EditorialSection from '@/components/EditorialSection';
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
+import { getCategoryTree } from '@/lib/api/server';
 
-export default function Home() {
+export default async function Home() {
+  const categories = await getCategoryTree();
+
   return (
     <div className="min-h-screen bg-brand-cream">
-      <Navbar />
+      <Navbar categories={categories} />
       <main>
         <Hero />
         <Collections />

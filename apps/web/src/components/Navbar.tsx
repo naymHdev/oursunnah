@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ShoppingBag, Search, Menu, X, Heart, ChevronDown } from 'lucide-react';
+import type { CategoryTreeNode } from '@/types/catalog';
+import { CollectionsMegaMenu } from './navbar/CollectionsMegaMenu';
+import { CollectionsAccordion } from './navbar/CollectionsAccordion';
 
 const navLinks = [
   { label: 'Collections', href: '#collections', hasDropdown: true },
@@ -11,16 +14,41 @@ const navLinks = [
   { label: 'Our Story', href: '#story', hasDropdown: false },
 ];
 
-export default function Navbar() {
+// Closing the mega-menu after a short delay (instead of instantly on
+// mouseleave) absorbs the gap between the "Collections" link and the
+// panel below it, so moving the cursor down into the panel doesn't
+// flicker it shut.
+const CLOSE_DELAY_MS = 150;
+
+type NavbarProps = {
+  categories: CategoryTreeNode[];
+};
+
+export default function Navbar({ categories }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [cartCount] = useState(2);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  }, []);
+
+  const openCollections = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setCollectionsOpen(true);
+  };
+
+  const scheduleCloseCollections = () => {
+    closeTimer.current = setTimeout(() => setCollectionsOpen(false), CLOSE_DELAY_MS);
+  };
 
   return (
     <>
@@ -44,12 +72,33 @@ export default function Navbar() {
 
             {/* Left nav */}
             <nav className="hidden lg:flex items-center gap-8">
-              {navLinks.slice(0, 3).map((link) => (
-                <a key={link.label} href={link.href} className={`nav-link flex items-center gap-1 ${scrolled ? 'text-brand-charcoal/80' : 'text-brand-cream/90 after:bg-brand-gold'}`}>
-                  {link.label}
-                  {link.hasDropdown && <ChevronDown size={11} strokeWidth={1.5} />}
-                </a>
-              ))}
+              {navLinks.slice(0, 3).map((link) =>
+                link.hasDropdown ? (
+                  <div
+                    key={link.label}
+                    className="relative"
+                    onMouseEnter={openCollections}
+                    onMouseLeave={scheduleCloseCollections}
+                  >
+                    <a
+                      href={link.href}
+                      className={`nav-link flex items-center gap-1 ${scrolled ? 'text-brand-charcoal/80' : 'text-brand-cream/90 after:bg-brand-gold'}`}
+                    >
+                      {link.label}
+                      <ChevronDown
+                        size={11}
+                        strokeWidth={1.5}
+                        className={`transition-transform duration-300 ${collectionsOpen ? 'rotate-180' : ''}`}
+                      />
+                    </a>
+                    <CollectionsMegaMenu categories={categories} open={collectionsOpen} />
+                  </div>
+                ) : (
+                  <a key={link.label} href={link.href} className={`nav-link flex items-center gap-1 ${scrolled ? 'text-brand-charcoal/80' : 'text-brand-cream/90 after:bg-brand-gold'}`}>
+                    {link.label}
+                  </a>
+                )
+              )}
             </nav>
 
             {/* Logo */}
@@ -114,27 +163,36 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       <div
-        className={`fixed inset-0 z-40 bg-brand-cream transition-transform duration-700 ease-luxury lg:hidden ${
+        className={`fixed inset-0 z-40 bg-brand-cream transition-transform duration-700 ease-luxury lg:hidden overflow-y-auto ${
           menuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex flex-col justify-center h-full px-10 pt-24 pb-12">
+        <div className="flex flex-col justify-center min-h-full px-10 pt-24 pb-12">
           <div className="mb-10">
             <p className="section-label text-brand-gold">Navigation</p>
             <div className="gold-divider mb-8" />
           </div>
           <nav className="flex flex-col gap-6">
-            {navLinks.map((link, i) => (
-              <a
-                key={link.label}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="font-serif text-3xl text-brand-charcoal hover:text-brand-gold transition-colors duration-300"
-                style={{ transitionDelay: `${i * 50}ms` }}
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link, i) =>
+              link.hasDropdown ? (
+                <div key={link.label} style={{ transitionDelay: `${i * 50}ms` }}>
+                  <CollectionsAccordion
+                    categories={categories}
+                    onNavigate={() => setMenuOpen(false)}
+                  />
+                </div>
+              ) : (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="font-serif text-3xl text-brand-charcoal hover:text-brand-gold transition-colors duration-300"
+                  style={{ transitionDelay: `${i * 50}ms` }}
+                >
+                  {link.label}
+                </a>
+              )
+            )}
           </nav>
           <div className="mt-12 flex items-center gap-6">
             <button className="btn-ghost text-brand-charcoal/70">Search</button>

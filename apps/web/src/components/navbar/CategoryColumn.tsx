@@ -5,13 +5,58 @@ type CategoryColumnProps = {
   onNavigate?: () => void;
 };
 
+type CategorySubtreeProps = {
+  nodes: CategoryTreeNode[];
+  depth: number;
+  onNavigate?: () => void;
+};
+
 /**
- * One top-level category + its children, rendered as a single column.
- * Used as-is inside the desktop mega-menu grid, and re-used (with
- * slightly different surrounding markup) inside the mobile accordion —
- * keeping the actual link list in one place so the two surfaces can't
- * drift out of sync.
+ * Renders one level of the tree and recurses into `children` for as
+ * many levels as the data actually has (the real tree is 3 deep today —
+ * e.g. Sunnah Clothing > Thobes Jubba > Saudi Thobes — but this makes
+ * no assumption about depth, so a 4th level added later just works).
+ * Styling gets one notch quieter (smaller text, indent guide) per
+ * level so deep branches stay readable instead of all looking the same.
  */
+function CategorySubtree({ nodes, depth, onNavigate }: CategorySubtreeProps) {
+  if (nodes.length === 0) return null;
+
+  const isFirstLevel = depth === 1;
+
+  return (
+    <ul
+      className={
+        isFirstLevel
+          ? "mt-3 flex flex-col gap-2.5"
+          : "mt-1.5 mb-1 ml-3 flex flex-col gap-1.5 border-l border-brand-stone/15 pl-3"
+      }
+    >
+      {nodes.map((node) => (
+        <li key={node.category.id}>
+          <a
+            href={`/category/${node.category.slug}`}
+            onClick={onNavigate}
+            className={
+              isFirstLevel
+                ? "text-body-md text-brand-charcoal/65 hover:text-brand-gold transition-colors duration-300"
+                : "text-caption text-brand-charcoal/50 hover:text-brand-gold transition-colors duration-300"
+            }
+          >
+            {node.category.name}
+          </a>
+          <CategorySubtree
+            nodes={node.children}
+            depth={depth + 1}
+            onNavigate={onNavigate}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** One top-level category (the column header) + its full subtree. */
 export function CategoryColumn({ node, onNavigate }: CategoryColumnProps) {
   return (
     <div className="min-w-[160px]">
@@ -23,21 +68,7 @@ export function CategoryColumn({ node, onNavigate }: CategoryColumnProps) {
         {node.category.name}
       </a>
 
-      {node.children.length > 0 && (
-        <ul className="mt-3 flex flex-col gap-2.5">
-          {node.children.map((child) => (
-            <li key={child.category.id}>
-              <a
-                href={`/category/${child.category.slug}`}
-                onClick={onNavigate}
-                className="text-body-md text-brand-charcoal/65 hover:text-brand-gold transition-colors duration-300"
-              >
-                {child.category.name}
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
+      <CategorySubtree nodes={node.children} depth={1} onNavigate={onNavigate} />
     </div>
   );
 }

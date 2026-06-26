@@ -25,8 +25,8 @@ export function CollectionsMegaMenu({ categories, open }: CollectionsMegaMenuPro
           : "opacity-0 -translate-y-2 pointer-events-none"
       }`}
     >
-      <div className="bg-brand-cream/98 backdrop-blur-md shadow-card-hover border border-brand-stone/10 rounded-sm px-10 py-8">
-        <div className="flex gap-12">
+      <div className="bg-brand-cream/98 backdrop-blur-md shadow-card-hover border border-brand-stone/10 rounded-sm px-10 py-8 max-w-[min(90vw,1200px)] max-h-[75vh] overflow-y-auto">
+        <div className="flex flex-wrap gap-x-12 gap-y-8">
           {categories.map((node) => (
             <CategoryColumn key={node.category.id} node={node} />
           ))}

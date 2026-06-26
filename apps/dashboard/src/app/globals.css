@@ -1,0 +1,58 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 45 33% 97%;
+    --foreground: 0 0% 11%;
+    --card: 38 33% 95%;
+    --card-foreground: 0 0% 11%;
+    --popover: 38 33% 95%;
+    --popover-foreground: 0 0% 11%;
+    --primary: 153 44% 22%;
+    --primary-foreground: 45 33% 97%;
+    --secondary: 38 25% 92%;
+    --secondary-foreground: 0 0% 11%;
+    --muted: 38 25% 92%;
+    --muted-foreground: 30 9% 50%;
+    --accent: 37 38% 52%;
+    --accent-foreground: 45 33% 97%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 35 30% 88%;
+    --input: 35 30% 88%;
+    --ring: 153 44% 22%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    box-sizing: border-box;
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: "Jost", system-ui, sans-serif;
+    background-color: #faf8f4;
+    color: #1c1c1c;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 400;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: #faf8f4; }
+  ::-webkit-scrollbar-thumb { background: #b8975a; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #d4af6a; }
+}

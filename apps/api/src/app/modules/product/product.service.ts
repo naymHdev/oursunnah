@@ -2,6 +2,7 @@ import type { CreateProductInput, UpdateProductInput, ProductQueryInput } from "
 import { prisma } from "../../../shared/prisma.js";
 import AppError from "../../error/AppError.js";
 import { generateUniqueSlug } from "../../utils/generateUniqueSlug.js";
+import { UploadService } from "../upload/upload.service.js";
 
 const slugExists = (excludeId?: string) => async (slug: string) => {
   const existing = await prisma.product.findUnique({ where: { slug } });
@@ -190,7 +191,10 @@ const getProductBySlug = async (slug: string) => {
 };
 
 const updateProduct = async (id: string, payload: UpdateProductInput) => {
-  const existing = await prisma.product.findUnique({ where: { id } });
+  const existing = await prisma.product.findUnique({
+    where: { id },
+    include: { images: true },
+  });
   if (!existing) {
     throw new AppError(404, "Product not found");
   }
@@ -202,6 +206,15 @@ const updateProduct = async (id: string, payload: UpdateProductInput) => {
   let slug = existing.slug;
   if (payload.name && payload.name !== existing.name) {
     slug = await generateUniqueSlug(payload.name, slugExists(id));
+  }
+
+  // Delete old images from Cloudinary if new images are provided
+  if (payload.images && existing.images.length > 0) {
+    const publicIds = existing.images.map((img) => img.publicId);
+    await UploadService.bulkDeleteImages(publicIds).catch((err) => {
+      console.error(`Failed to delete old images for product ${id}:`, err);
+      // Continue with update even if image deletion fails
+    });
   }
 
   return prisma.$transaction(async (tx) => {
@@ -258,9 +271,21 @@ const updateProduct = async (id: string, payload: UpdateProductInput) => {
 };
 
 const deleteProduct = async (id: string) => {
-  const existing = await prisma.product.findUnique({ where: { id } });
+  const existing = await prisma.product.findUnique({
+    where: { id },
+    include: { images: true },
+  });
   if (!existing) {
     throw new AppError(404, "Product not found");
+  }
+
+  // Bulk delete images from Cloudinary before deleting from DB
+  if (existing.images && existing.images.length > 0) {
+    const publicIds = existing.images.map((img) => img.publicId);
+    await UploadService.bulkDeleteImages(publicIds).catch((err) => {
+      console.error(`Failed to delete images for product ${id}:`, err);
+      // Continue with DB deletion even if image deletion fails
+    });
   }
 
   await prisma.product.delete({ where: { id } });

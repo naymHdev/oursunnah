@@ -7,6 +7,7 @@ import { prisma } from "../../../shared/prisma.js";
 import AppError from "../../error/AppError.js";
 import { generateUniqueSlug } from "../../utils/generateUniqueSlug.js";
 import { buildCategoryTree } from "../../utils/buildCategoryTree.js";
+import { UploadService } from "../upload/upload.service.js";
 
 const slugExists = (excludeId?: string) => async (slug: string) => {
   const existing = await prisma.category.findUnique({ where: { slug } });
@@ -87,6 +88,14 @@ const updateCategory = async (id: string, payload: UpdateCategoryInput) => {
     slug = await generateUniqueSlug(payload.name, slugExists(id));
   }
 
+  // Delete old image from Cloudinary if new image is provided
+  if (payload.image && existing.imagePublicId) {
+    await UploadService.deleteSingleImage(existing.imagePublicId).catch((err) => {
+      console.error(`Failed to delete old image for category ${id}:`, err);
+      // Continue with update even if image deletion fails
+    });
+  }
+
   return prisma.category.update({
     where: { id },
     data: { ...payload, slug },
@@ -97,6 +106,14 @@ const deleteCategory = async (id: string) => {
   const existing = await prisma.category.findUnique({ where: { id } });
   if (!existing) {
     throw new AppError(404, "Category not found");
+  }
+
+  // Delete category image from Cloudinary if it exists
+  if (existing.imagePublicId) {
+    await UploadService.deleteSingleImage(existing.imagePublicId).catch((err) => {
+      console.error(`Failed to delete image for category ${id}:`, err);
+      // Continue with deletion even if image deletion fails
+    });
   }
 
   // Children automatically become root categories (parentId -> null)

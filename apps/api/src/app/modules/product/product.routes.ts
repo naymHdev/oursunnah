@@ -7,25 +7,25 @@ import optionalAuth from "../../middleware/optionalAuth.js";
 
 const router = Router();
 
-// Public — storefront listing & detail
+// Public — storefront
 router.get("/", ProductController.getProducts);
 router.get("/:slug", optionalAuth(), ProductController.getProductBySlug);
 
-// Protected — TODO: tighten to admin-only once a role field exists on User.
+// Protected — EDITOR, ADMIN, SUPER_ADMIN
 router.post(
   "/",
-  auth(),
+  auth("EDITOR"),
   validateRequest(ProductValidation.createProductSchema),
   ProductController.createProduct
 );
 
 router.patch(
   "/:id",
-  auth(),
+  auth("EDITOR"),
   validateRequest(ProductValidation.updateProductSchema),
   ProductController.updateProduct
 );
 
-router.delete("/:id", auth(), ProductController.deleteProduct);
+router.delete("/:id", auth("ADMIN"), ProductController.deleteProduct);
 
 export const ProductRoutes = router;

@@ -16,6 +16,15 @@ enum AuthProvider {
   APPLE
 }
 
+
+enum UserRole {
+  CUSTOMER
+  MANAGER      // orders & customers — read/update only
+  EDITOR       // products & categories — full CRUD
+  ADMIN        // all of the above
+  SUPER_ADMIN  // can create/demote other admins
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -50,6 +59,7 @@ model User {
   avatar        String?
   gender        Gender?
   dateOfBirth   DateTime?
+  role          UserRole        @default(CUSTOMER)
   emailVerified Boolean        @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt

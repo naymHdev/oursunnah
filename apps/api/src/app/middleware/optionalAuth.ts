@@ -10,6 +10,7 @@ const optionalAuth = () => {
       try {
         const payload = verifyAccessToken(token);
         req.userId = payload.userId;
+        req.userRole = payload.role;
       } catch {
         // Invalid/expired token on an optional route - proceed as a guest
         // rather than failing the request.

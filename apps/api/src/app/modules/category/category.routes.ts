@@ -6,33 +6,32 @@ import auth from "../../middleware/auth.js";
 
 const router = Router();
 
-// Public — used for navbar/storefront rendering
+// Public — navbar & storefront
 router.get("/", CategoryController.getCategoryTree);
 router.get("/:slug", CategoryController.getCategoryBySlug);
 
-// Protected — TODO: tighten to admin-only once a role field exists on User.
-// `auth()` currently only proves the request is from a logged-in user.
+// Protected — EDITOR, ADMIN, SUPER_ADMIN
 router.post(
   "/",
-  auth(),
+  auth("EDITOR"),
   validateRequest(CategoryValidation.createCategorySchema),
   CategoryController.createCategory
 );
 
 router.patch(
   "/reorder",
-  auth(),
+  auth("EDITOR"),
   validateRequest(CategoryValidation.reorderCategoriesSchema),
   CategoryController.reorderCategories
 );
 
 router.patch(
   "/:id",
-  auth(),
+  auth("EDITOR"),
   validateRequest(CategoryValidation.updateCategorySchema),
   CategoryController.updateCategory
 );
 
-router.delete("/:id", auth(), CategoryController.deleteCategory);
+router.delete("/:id", auth("ADMIN"), CategoryController.deleteCategory);
 
 export const CategoryRoutes = router;

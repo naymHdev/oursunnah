@@ -8,9 +8,9 @@ import type { RequestMeta } from "../../utils/getRequestMeta.js";
 
 const REFRESH_TOKEN_TTL_DAYS = 30;
 
-const generateTokens = async (userId: string, meta?: RequestMeta) => {
-  const accessToken = signAccessToken({ userId });
-  const refreshToken = signRefreshToken({ userId });
+const generateTokens = async (userId: string, role: import("@our-sunnah/database").UserRole, meta?: RequestMeta) => {
+  const accessToken = signAccessToken({ userId, role });
+  const refreshToken = signRefreshToken({ userId, role });
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_TTL_DAYS);
@@ -43,8 +43,8 @@ const createAccount = async (payload: RegisterInput, meta?: RequestMeta) => {
     data: { name: payload.name, email: payload.email, password: hashedPassword },
   });
 
-  const tokens = await generateTokens(user.id, meta);
-  return { user: { id: user.id, name: user.name, email: user.email }, ...tokens };
+  const tokens = await generateTokens(user.id, user.role, meta);
+  return { user: { id: user.id, name: user.name, email: user.email, role: user.role }, ...tokens };
 };
 
 const loginAccount = async (payload: LoginInput, meta?: RequestMeta) => {
@@ -58,8 +58,8 @@ const loginAccount = async (payload: LoginInput, meta?: RequestMeta) => {
     throw new AppError(401, "Invalid email or password");
   }
 
-  const tokens = await generateTokens(user.id, meta);
-  return { user: { id: user.id, name: user.name, email: user.email }, ...tokens };
+  const tokens = await generateTokens(user.id, user.role, meta);
+  return { user: { id: user.id, name: user.name, email: user.email, role: user.role }, ...tokens };
 };
 
 const logoutAccount = async (refreshToken: string) => {
@@ -79,12 +79,13 @@ const socialLogin = async (payload: SocialLoginInput, meta?: RequestMeta) => {
   });
 
   if (existingSocialAccount) {
-    const tokens = await generateTokens(existingSocialAccount.user.id, meta);
+    const tokens = await generateTokens(existingSocialAccount.user.id, existingSocialAccount.user.role, meta);
     return {
       user: {
         id: existingSocialAccount.user.id,
         name: existingSocialAccount.user.name,
         email: existingSocialAccount.user.email,
+        role: existingSocialAccount.user.role,
       },
       ...tokens,
     };
@@ -104,8 +105,8 @@ const socialLogin = async (payload: SocialLoginInput, meta?: RequestMeta) => {
     data: { userId: user.id, provider, providerId: payload.providerId },
   });
 
-  const tokens = await generateTokens(user.id, meta);
-  return { user: { id: user.id, name: user.name, email: user.email }, ...tokens };
+  const tokens = await generateTokens(user.id, user.role, meta);
+  return { user: { id: user.id, name: user.name, email: user.email, role: user.role }, ...tokens };
 };
 
 export const AuthService = {

@@ -6,8 +6,9 @@ import type { CategoryTreeNode } from '@/types/catalog';
 import { CollectionsMegaMenu } from './navbar/CollectionsMegaMenu';
 import { CollectionsAccordion } from './navbar/CollectionsAccordion';
 import CartDrawer from './cart/CartDrawer';
+import SearchModal from './search/SearchModal';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { openCartDrawer } from '@/lib/redux/slices/uiSlice';
+import { openCartDrawer, openSearchModal } from '@/lib/redux/slices/uiSlice';
 import { selectCartCount } from '@/lib/redux/slices/cartSlice';
 
 const navLinks = [
@@ -148,7 +149,7 @@ export default function Navbar({ categories }: NavbarProps) {
                 </a>
               ))}
               <div className="flex items-center gap-5 ml-4 border-l border-current/10 pl-6">
-                <button className={`transition-colors duration-300 hover:text-brand-gold ${scrolled ? 'text-brand-charcoal/60' : 'text-brand-cream/70'}`} aria-label="Search">
+                <button onClick={() => dispatch(openSearchModal())} className={`transition-colors duration-300 hover:text-brand-gold ${scrolled ? 'text-brand-charcoal/60' : 'text-brand-cream/70'}`} aria-label="Search">
                   <Search size={18} strokeWidth={1.5} />
                 </button>
                 <button className={`transition-colors duration-300 hover:text-brand-gold ${scrolled ? 'text-brand-charcoal/60' : 'text-brand-cream/70'}`} aria-label="Wishlist">
@@ -224,13 +225,14 @@ export default function Navbar({ categories }: NavbarProps) {
             )}
           </nav>
           <div className="mt-12 flex items-center gap-6">
-            <button className="btn-ghost text-brand-charcoal/70">Search</button>
+            <button onClick={() => dispatch(openSearchModal())} className="btn-ghost text-brand-charcoal/70">Search</button>
             <button className="btn-ghost text-brand-charcoal/70">Wishlist</button>
           </div>
         </div>
       </div>
 
       <CartDrawer />
+      <SearchModal />
     </>
   );
 }

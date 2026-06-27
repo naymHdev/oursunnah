@@ -24,14 +24,23 @@ export type TCategoryTree = Omit<TCategory, "children"> & {
   children: TCategoryTree[];
 };
 
-// Alias used by ProductForm
-export type CategoryItem = TCategory;
-export type CategoryTreeResponse = { data: TCategoryTree[] };
+type CategoryTreeNode = {
+  category: TCategory;
+  children: CategoryTreeNode[];
+};
+
+const mapCategoryTree = (nodes: CategoryTreeNode[]): TCategoryTree[] =>
+  nodes.map(({ category, children }) => ({
+    ...category,
+    children: mapCategoryTree(children),
+  }));
 
 const categoryApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getCategoryTree: build.query<{ data: TCategoryTree[] }, void>({
+    getCategoryTree: build.query<TCategoryTree[], void>({
       query: () => "/categories",
+      transformResponse: (response: { data: CategoryTreeNode[] }) =>
+        mapCategoryTree(response.data),
       providesTags: [tagTypes.category],
     }),
 

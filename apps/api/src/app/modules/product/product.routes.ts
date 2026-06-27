@@ -18,7 +18,7 @@ router.get("/:slug", optionalAuth(), ProductController.getProductBySlug);
 // 2. Multipart: Content-Type: multipart/form-data + data field (JSON stringified) + images field (files)
 router.post(
   "/",
-  auth("EDITOR"),
+  auth(),
   uploadMultiple,
   handleMulterErrors,
   ProductController.createProduct

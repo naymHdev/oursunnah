@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
@@ -27,143 +28,202 @@ import {
 } from "@/redux/api/categoryApi";
 import type { CreateCategoryInput, UpdateCategoryInput } from "@our-sunnah/validation";
 
-// ─── Category Row ────────────────────────────────────────────────────────────
+type CategoryStats = {
+  roots: number;
+  total: number;
+  active: number;
+};
 
-function CategoryRow({
-  cat,
-  allCategories,
-  depth = 0,
-  onEdit,
-  onDelete,
-  onToggleActive,
-  isTogglingId,
-}: {
+type CategoryNodeProps = {
   cat: TCategoryTree;
-  allCategories: TCategoryTree[];
   depth?: number;
+  path: string[];
+  expandedIds: Set<string>;
+  onToggleExpand: (id: string) => void;
   onEdit: (cat: TCategoryTree) => void;
   onDelete: (cat: TCategoryTree) => void;
   onToggleActive: (cat: TCategoryTree) => void;
   isTogglingId: string | null;
-}) {
-  const [expanded, setExpanded] = useState(true);
-  const hasChildren = cat.children && cat.children.length > 0;
+};
+
+function getCategoryStats(categories: TCategoryTree[]): CategoryStats {
+  const stats: CategoryStats = { roots: categories.length, total: 0, active: 0 };
+
+  const walk = (items: TCategoryTree[]) => {
+    for (const item of items) {
+      stats.total += 1;
+      if (item.isActive) stats.active += 1;
+      if (item.children.length > 0) walk(item.children);
+    }
+  };
+
+  walk(categories);
+  return stats;
+}
+
+function collectCategoryIds(categories: TCategoryTree[]): string[] {
+  const ids: string[] = [];
+
+  const walk = (items: TCategoryTree[]) => {
+    for (const item of items) {
+      ids.push(item.id);
+      if (item.children.length > 0) walk(item.children);
+    }
+  };
+
+  walk(categories);
+  return ids;
+}
+
+function CategoryNode({
+  cat,
+  depth = 0,
+  path,
+  expandedIds,
+  onToggleExpand,
+  onEdit,
+  onDelete,
+  onToggleActive,
+  isTogglingId,
+}: CategoryNodeProps) {
+  const hasChildren = cat.children.length > 0;
+  const isExpanded = expandedIds.has(cat.id);
   const isToggling = isTogglingId === cat.id;
+  const currentPath = [...path, cat.name];
 
   return (
-    <>
+    <div className={depth > 0 ? "pl-5 border-l border-dashed border-brand-beige-dark/70" : ""}>
       <div
         className={[
-          "flex items-center gap-3 px-4 py-3 border-b border-brand-beige-dark/60",
-          "hover:bg-brand-cream/60 transition-colors group",
-          depth > 0 ? "pl-10 bg-brand-cream/30" : "",
+          "rounded-xl border border-brand-beige-dark bg-white/90 shadow-sm overflow-hidden",
+          depth === 0 ? "bg-brand-cream-warm" : "",
         ].join(" ")}
       >
-        {/* Drag handle */}
-        <GripVertical className="h-4 w-4 text-brand-stone/40 cursor-grab shrink-0" />
-
-        {/* Expand toggle */}
-        {hasChildren ? (
+        <div className="flex items-start gap-3 px-4 py-4 group">
           <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-brand-stone hover:text-brand-charcoal transition-colors"
+            type="button"
+            onClick={() => hasChildren && onToggleExpand(cat.id)}
+            disabled={!hasChildren}
+            className={[
+              "mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition-colors",
+              hasChildren
+                ? "border-brand-beige-dark bg-white text-brand-stone hover:border-brand-gold hover:text-brand-charcoal"
+                : "border-dashed border-brand-beige-dark/70 bg-brand-cream text-brand-stone/30 cursor-default",
+            ].join(" ")}
+            title={hasChildren ? (isExpanded ? "Collapse subtree" : "Expand subtree") : "Leaf category"}
           >
-            {expanded ? (
-              <ChevronDown className="h-3.5 w-3.5" />
+            {hasChildren ? (
+              isExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )
             ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
+              <span className="h-2 w-2 rounded-full bg-brand-beige-dark/60" />
             )}
           </button>
-        ) : (
-          <span className="w-3.5" />
-        )}
 
-        {/* Name */}
-        <span
-          className={[
-            "flex-1 font-sans text-sm",
-            depth === 0
-              ? "font-medium text-brand-charcoal"
-              : "text-brand-charcoal/80",
-          ].join(" ")}
-        >
-          {cat.name}
-        </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="min-w-0 truncate font-serif text-base text-brand-charcoal">
+                {cat.name}
+              </h3>
+              <Badge variant={cat.isActive ? "active" : "inactive"}>
+                {cat.isActive ? "Active" : "Inactive"}
+              </Badge>
+              <Badge variant="default">Level {depth + 1}</Badge>
+              {hasChildren && <Badge variant="default">{cat.children.length} children</Badge>}
+            </div>
 
-        {/* Product count */}
-        {cat._count?.products !== undefined && (
-          <span className="text-xs font-sans text-brand-stone bg-brand-beige-dark/60 rounded-full px-2 py-0.5 min-w-[28px] text-center">
-            {cat._count.products}
-          </span>
-        )}
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-sans text-brand-stone">
+              <span className="rounded-full bg-brand-cream px-2.5 py-1">
+                Path: {currentPath.join(" / ")}
+              </span>
+              <span className="rounded-full bg-brand-cream px-2.5 py-1">
+                /{cat.slug}
+              </span>
+              <span className="rounded-full bg-brand-cream px-2.5 py-1">
+                Position {cat.position}
+              </span>
+              {cat._count?.products !== undefined && (
+                <span className="rounded-full bg-brand-cream px-2.5 py-1">
+                  {cat._count.products} products
+                </span>
+              )}
+            </div>
+          </div>
 
-        {/* Active toggle */}
-        {isToggling ? (
-          <Loader2 className="h-4 w-4 animate-spin text-brand-stone" />
-        ) : (
-          <Switch
-            checked={cat.isActive}
-            onCheckedChange={() => onToggleActive(cat)}
-          />
-        )}
+          <div className="flex items-center gap-2 shrink-0">
+            {isToggling ? (
+              <Loader2 className="h-4 w-4 animate-spin text-brand-stone" />
+            ) : (
+              <Switch
+                checked={cat.isActive}
+                onCheckedChange={() => onToggleActive(cat)}
+              />
+            )}
 
-        {/* Edit / Delete */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={() => onEdit(cat)}
-            className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-brand-cream transition-colors text-brand-stone hover:text-brand-charcoal"
-            title="Edit"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={() => onDelete(cat)}
-            className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-red-50 transition-colors text-brand-stone hover:text-red-500"
-            title="Delete"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+            <button
+              onClick={() => onEdit(cat)}
+              className="h-8 w-8 flex items-center justify-center rounded-md border border-brand-beige-dark bg-white text-brand-stone transition-colors hover:text-brand-charcoal hover:border-brand-gold"
+              title="Edit"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => onDelete(cat)}
+              className="h-8 w-8 flex items-center justify-center rounded-md border border-brand-beige-dark bg-white text-brand-stone transition-colors hover:text-red-500 hover:border-red-200"
+              title="Delete"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Children */}
-      {hasChildren &&
-        expanded &&
-        cat.children.map((child) => (
-          <CategoryRow
-            key={child.id}
-            cat={child}
-            allCategories={allCategories}
-            depth={depth + 1}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onToggleActive={onToggleActive}
-            isTogglingId={isTogglingId}
-          />
-        ))}
-    </>
+      {hasChildren && isExpanded && (
+        <div className="mt-3 space-y-3">
+          {cat.children.map((child) => (
+            <CategoryNode
+              key={child.id}
+              cat={child}
+              depth={depth + 1}
+              path={currentPath}
+              expandedIds={expandedIds}
+              onToggleExpand={onToggleExpand}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onToggleActive={onToggleActive}
+              isTogglingId={isTogglingId}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
-
 export default function CategoriesPage() {
-  // API hooks
   const { data, isLoading, isError } = useGetCategoryTreeQuery();
   const [createCategory, { isLoading: isCreating }] = useCreateCategoryMutation();
   const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
   const [deleteCategory, { isLoading: isDeleting }] = useDeleteCategoryMutation();
 
-  // UI state
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [editTarget, setEditTarget] = useState<TCategoryTree | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TCategoryTree | null>(null);
   const [isTogglingId, setIsTogglingId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  const categories = data?.data ?? [];
+  const categories = data ?? [];
+  const stats = getCategoryStats(categories);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (categories.length > 0 && expandedIds.size === 0) {
+      setExpandedIds(new Set(categories.map((cat) => cat.id)));
+    }
+  }, [categories, expandedIds.size]);
 
   const handleOpenCreate = () => {
     setEditTarget(null);
@@ -181,16 +241,16 @@ export default function CategoriesPage() {
     setDeleteTarget(cat);
   };
 
-  const handleCreate = async (data: CreateCategoryInput) => {
-    await createCategory(data).unwrap();
+  const handleCreate = async (payload: CreateCategoryInput) => {
+    await createCategory(payload).unwrap();
     setFormOpen(false);
   };
 
-  const handleUpdate = async (data: CreateCategoryInput) => {
+  const handleUpdate = async (payload: CreateCategoryInput) => {
     if (!editTarget) return;
     await updateCategory({
       id: editTarget.id,
-      body: data as UpdateCategoryInput,
+      body: payload as UpdateCategoryInput,
     }).unwrap();
     setFormOpen(false);
     setEditTarget(null);
@@ -214,7 +274,20 @@ export default function CategoriesPage() {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const expandAll = () => setExpandedIds(new Set(collectCategoryIds(categories)));
+  const collapseAll = () => setExpandedIds(new Set());
 
   return (
     <div className="min-h-screen bg-brand-cream">
@@ -222,42 +295,61 @@ export default function CategoriesPage() {
       <div className="ml-60">
         <Header title="Categories" subtitle="Manage Product Hierarchy" />
         <main className="p-6">
-          {/* Top bar */}
-          <div className="flex items-center justify-between mb-5">
-            <p className="text-xs uppercase tracking-widest text-brand-stone font-sans">
-              {categories.length} root{" "}
-              {categories.length === 1 ? "category" : "categories"}
-            </p>
+          <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-brand-beige-dark bg-white px-4 py-3 shadow-sm">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-brand-stone font-sans">
+                  Root groups
+                </p>
+                <p className="mt-1 font-serif text-2xl text-brand-charcoal">
+                  {stats.roots}
+                </p>
+              </div>
+              <div className="rounded-xl border border-brand-beige-dark bg-white px-4 py-3 shadow-sm">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-brand-stone font-sans">
+                  Total categories
+                </p>
+                <p className="mt-1 font-serif text-2xl text-brand-charcoal">
+                  {stats.total}
+                </p>
+              </div>
+              <div className="rounded-xl border border-brand-beige-dark bg-white px-4 py-3 shadow-sm">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-brand-stone font-sans">
+                  Active categories
+                </p>
+                <p className="mt-1 font-serif text-2xl text-brand-charcoal">
+                  {stats.active}
+                </p>
+              </div>
+            </div>
+
             <Button variant="gold" onClick={handleOpenCreate}>
               <Plus className="h-4 w-4" />
               Add Category
             </Button>
           </div>
 
-          {/* Loading */}
           {isLoading && (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="h-6 w-6 animate-spin text-brand-gold" />
             </div>
           )}
 
-          {/* Error */}
           {isError && (
-            <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-              <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
+            <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
               <p className="text-sm font-sans text-red-600">
                 Failed to load categories. Please refresh the page.
               </p>
             </div>
           )}
 
-          {/* Empty state */}
           {!isLoading && !isError && categories.length === 0 && (
-            <div className="text-center py-20 border border-dashed border-brand-beige-dark rounded-xl">
-              <p className="font-serif text-xl text-brand-charcoal mb-1">
+            <div className="rounded-xl border border-dashed border-brand-beige-dark py-20 text-center">
+              <p className="mb-1 font-serif text-xl text-brand-charcoal">
                 No categories yet
               </p>
-              <p className="text-sm font-sans text-brand-stone mb-5">
+              <p className="mb-5 text-sm font-sans text-brand-stone">
                 Create your first category to organise products
               </p>
               <Button variant="gold" onClick={handleOpenCreate}>
@@ -267,34 +359,50 @@ export default function CategoriesPage() {
             </div>
           )}
 
-          {/* Tree */}
           {!isLoading && !isError && categories.length > 0 && (
-            <Card>
-              <div className="px-4 py-2.5 border-b border-brand-beige-dark">
-                <p className="text-xs uppercase tracking-widest text-brand-stone font-sans flex items-center gap-1.5">
-                  <GripVertical className="h-3.5 w-3.5" />
-                  Drag to reorder
-                </p>
+            <Card className="overflow-hidden">
+              <div className="flex flex-col gap-3 border-b border-brand-beige-dark px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-center gap-2">
+                  <GripVertical className="h-3.5 w-3.5 text-brand-stone" />
+                  <p className="text-xs uppercase tracking-[0.25em] text-brand-stone font-sans">
+                    Category tree
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" onClick={collapseAll}>
+                    Collapse all
+                  </Button>
+                  <Button variant="outline" onClick={expandAll}>
+                    Expand all
+                  </Button>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-brand-stone font-sans">
+                    Nested categories stay readable by full path
+                  </p>
+                </div>
               </div>
-              <CardContent className="p-0">
-                {categories.map((cat) => (
-                  <CategoryRow
-                    key={cat.id}
-                    cat={cat}
-                    allCategories={categories}
-                    onEdit={handleOpenEdit}
-                    onDelete={handleOpenDelete}
-                    onToggleActive={handleToggleActive}
-                    isTogglingId={isTogglingId}
-                  />
-                ))}
+
+              <CardContent className="p-4">
+                <div className="space-y-4">
+                  {categories.map((cat) => (
+                    <CategoryNode
+                      key={cat.id}
+                      cat={cat}
+                      path={[]}
+                      expandedIds={expandedIds}
+                      onToggleExpand={toggleExpanded}
+                      onEdit={handleOpenEdit}
+                      onDelete={handleOpenDelete}
+                      onToggleActive={handleToggleActive}
+                      isTogglingId={isTogglingId}
+                    />
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}
         </main>
       </div>
 
-      {/* Create / Edit form dialog */}
       <CategoryForm
         open={formOpen}
         onOpenChange={setFormOpen}
@@ -316,7 +424,6 @@ export default function CategoriesPage() {
         isLoading={isCreating || isUpdating}
       />
 
-      {/* Delete confirm dialog */}
       <DeleteConfirmDialog
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => !open && setDeleteTarget(null)}

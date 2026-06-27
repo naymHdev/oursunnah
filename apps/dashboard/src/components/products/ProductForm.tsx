@@ -24,7 +24,7 @@ type ProductFormValues = z.input<typeof createProductSchema>;
 function flattenCategories(
   categories: { id: string; name: string; children?: { id: string; name: string }[] }[]
 ): { id: string; name: string }[] {
-  return categories.flatMap((c) => [c, ...(c.children ?? [])]);
+  return categories.flatMap((c) => [c, ...flattenCategories(c.children ?? [])]);
 }
 
 const SECTION = "flex flex-col gap-3 p-4 rounded-lg border border-brand-beige-dark bg-white";
@@ -32,7 +32,7 @@ const SECTION_TITLE = "text-xs font-medium uppercase tracking-widest text-brand-
 
 export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }: ProductFormProps) {
   const { data: categoryData } = useGetCategoryTreeQuery();
-  const categories = flattenCategories(categoryData?.data ?? []);
+  const categories = flattenCategories(categoryData ?? []);
 
   // Track which optional sections are expanded
   const [showAttributes, setShowAttributes] = useState(

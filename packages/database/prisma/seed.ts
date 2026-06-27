@@ -1,5 +1,5 @@
 /**
- * Database Seed — Admin account + 20 demo products
+ * Database Seed — Admin account + Categories + Demo products
  *
  * Run: pnpm --filter @our-sunnah/database seed
  */
@@ -8,6 +8,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
+import CATEGORY_SEED_DATA from "./seeds/category-seed.js";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" }),
@@ -315,7 +316,7 @@ const PRODUCTS = [
 ];
 
 async function seedAdmin() {
-  console.log("🌱  Seeding SUPER_ADMIN account…\n");
+  console.log("🔐  Seeding SUPER_ADMIN account…\n");
 
   const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 12);
 
@@ -340,8 +341,53 @@ async function seedAdmin() {
   console.log(`    Role  : ${admin.role}\n`);
 }
 
+async function seedCategories() {
+  console.log("📁  Seeding categories…\n");
+
+  try {
+    const slugs = CATEGORY_SEED_DATA.map((c) => c.slug);
+    const duplicates = slugs.filter((s, i) => slugs.indexOf(s) !== i);
+
+    if (duplicates.length > 0) {
+      throw new Error(`Duplicate slugs found: ${duplicates.join(", ")}`);
+    }
+
+    const categoryIds = new Set(CATEGORY_SEED_DATA.map((c) => c.id));
+
+    for (const category of CATEGORY_SEED_DATA) {
+      if (category.parentId && !categoryIds.has(category.parentId)) {
+        throw new Error(
+          `Parent category not found for ${category.id}: ${category.parentId}`
+        );
+      }
+    }
+
+    const result = await prisma.category.createMany({
+      data: CATEGORY_SEED_DATA.map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        description: cat.description,
+        position: cat.position,
+        parentId: cat.parentId,
+        isActive: cat.isActive,
+      })),
+      skipDuplicates: true,
+    });
+
+    const totalCount = await prisma.category.count();
+    const rootCount = await prisma.category.count({ where: { parentId: null } });
+
+    console.log(`✅  Created ${result.count} categories`);
+    console.log(`    Total: ${totalCount} | Root: ${rootCount}\n`);
+  } catch (error) {
+    console.error("❌  Category seeding failed:", error);
+    throw error;
+  }
+}
+
 async function seedProducts() {
-  console.log("🌱  Seeding 20 demo products…\n");
+  console.log("🛍️   Seeding 20 demo products…\n");
 
   for (const productData of PRODUCTS) {
     const product = await prisma.product.upsert({
@@ -379,14 +425,15 @@ async function seedProducts() {
     console.log(`✅  ${product.name}`);
   }
 
-  console.log(`\n🎉  ${PRODUCTS.length} products seeded successfully!`);
+  console.log(`\n🎉  ${PRODUCTS.length} products seeded successfully!\n`);
 }
 
 async function main() {
   try {
     await seedAdmin();
+    await seedCategories();
     await seedProducts();
-    console.log("\n✨  Database seeding complete!");
+    console.log("✨  Database seeding complete!");
   } catch (e) {
     console.error("❌  Seed failed:", e);
     process.exit(1);

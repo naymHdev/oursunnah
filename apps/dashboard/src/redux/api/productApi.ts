@@ -1,7 +1,6 @@
 import { tagTypes } from "../tagTypes";
 import { baseApi } from "./baseApi";
 import type {
-  CreateProductInput,
   UpdateProductInput,
   ProductQueryInput,
 } from "@our-sunnah/validation";
@@ -116,7 +115,10 @@ const productApi = baseApi.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.data.map(({ id }) => ({ type: tagTypes.product as typeof tagTypes.product, id })),
+              ...result.data.map(({ id }) => ({
+                type: tagTypes.product as typeof tagTypes.product,
+                id,
+              })),
               { type: tagTypes.product, id: "LIST" },
             ]
           : [{ type: tagTypes.product, id: "LIST" }],
@@ -127,23 +129,28 @@ const productApi = baseApi.injectEndpoints({
       providesTags: (_result, _err, slug) => [{ type: tagTypes.product, id: slug }],
     }),
 
-    createProduct: build.mutation<ProductMutationResponse, CreateProductInput>({
-      query: (body) => ({
+    // Accepts FormData (multipart) — backend parses `data` field + `images` files
+    createProduct: build.mutation<ProductMutationResponse, FormData>({
+      query: (formData) => ({
         url: "/products",
         method: "POST",
-        body,
+        body: formData,
+        // Do NOT set Content-Type — browser auto-sets multipart boundary
+        formData: true,
       }),
       invalidatesTags: [{ type: tagTypes.product, id: "LIST" }],
     }),
 
+    // Accepts FormData (multipart) for update as well
     updateProduct: build.mutation<
       ProductMutationResponse,
-      { id: string; body: UpdateProductInput }
+      { id: string; body: FormData | Partial<UpdateProductInput> }
     >({
       query: ({ id, body }) => ({
         url: `/products/${id}`,
         method: "PATCH",
         body,
+        ...(body instanceof FormData ? { formData: true } : {}),
       }),
       invalidatesTags: (_result, _err, { id }) => [
         { type: tagTypes.product, id },

@@ -8,7 +8,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ProductForm } from "./ProductForm";
-import { useCreateProductMutation, useUpdateProductMutation, type Product } from "@/redux/api/productApi";
+import {
+  useCreateProductMutation,
+  useUpdateProductMutation,
+  type Product,
+} from "@/redux/api/productApi";
 import type { CreateProductInput } from "@our-sunnah/validation";
 
 type ProductFormModalProps = {
@@ -25,7 +29,9 @@ function toFormDefaults(product: Product): Partial<CreateProductInput> {
     sku: product.sku ?? undefined,
     brand: product.brand ?? undefined,
     price: parseFloat(product.price),
-    compareAtPrice: product.compareAtPrice ? parseFloat(product.compareAtPrice) : undefined,
+    compareAtPrice: product.compareAtPrice
+      ? parseFloat(product.compareAtPrice)
+      : undefined,
     stock: product.stock,
     isActive: product.isActive,
     isFeatured: product.isFeatured,
@@ -65,12 +71,13 @@ export function ProductFormModal({ open, onClose, product }: ProductFormModalPro
   const isEditing = Boolean(product);
   const isLoading = isCreating || isUpdating;
 
-  const handleSubmit = async (data: CreateProductInput) => {
+  // Now receives FormData (multipart: data field + image files)
+  const handleSubmit = async (formData: FormData) => {
     try {
       if (isEditing && product) {
-        await updateProduct({ id: product.id, body: data }).unwrap();
+        await updateProduct({ id: product.id, body: formData }).unwrap();
       } else {
-        await createProduct(data).unwrap();
+        await createProduct(formData).unwrap();
       }
       onClose();
     } catch (err) {

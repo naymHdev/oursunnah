@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { createProductSchema, type CreateProductInput } from "@our-sunnah/validation";
@@ -11,30 +11,43 @@ import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { useGetCategoryTreeQuery } from "@/redux/api/categoryApi";
 import type { Product } from "@/redux/api/productApi";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
+import { CategoryTreeSelector } from "./CategoryTreeSelector";
+import { ImageUploadSection } from "./sections/ImageUploadSection";
+import { useImageHandler } from "./hooks/useImageHandler";
+import { useProductForm } from "./hooks/useProductForm";
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+type ProductFormValues = z.input<typeof createProductSchema>;
 
 type ProductFormProps = {
   defaultValues?: Partial<CreateProductInput>;
   initialData?: Product;
-  onSubmit: (data: CreateProductInput) => Promise<void>;
+  /** Receives a ready-to-send FormData (multipart: data + image files) */
+  onSubmit: (formData: FormData) => Promise<void>;
   isLoading: boolean;
 };
 
-type ProductFormValues = z.input<typeof createProductSchema>;
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-function flattenCategories(
-  categories: { id: string; name: string; children?: { id: string; name: string }[] }[]
-): { id: string; name: string }[] {
-  return categories.flatMap((c) => [c, ...flattenCategories(c.children ?? [])]);
-}
+const SECTION =
+  "flex flex-col gap-4 p-4 rounded-lg border border-brand-beige-dark bg-white";
+const SECTION_TITLE =
+  "text-xs font-medium uppercase tracking-widest text-brand-stone font-sans";
 
-const SECTION = "flex flex-col gap-3 p-4 rounded-lg border border-brand-beige-dark bg-white";
-const SECTION_TITLE = "text-xs font-medium uppercase tracking-widest text-brand-stone font-sans";
+// ── Component ─────────────────────────────────────────────────────────────────
 
-export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }: ProductFormProps) {
-  const { data: categoryData } = useGetCategoryTreeQuery();
-  const categories = flattenCategories(categoryData ?? []);
+export function ProductForm({
+  defaultValues,
+  initialData,
+  onSubmit,
+  isLoading,
+}: ProductFormProps) {
+  // Category tree from API
+  const { data: categoryTree = [] } = useGetCategoryTreeQuery();
 
-  // Track which optional sections are expanded
+  // Collapsible optional sections
   const [showAttributes, setShowAttributes] = useState(
     (initialData?.attributes.length ?? 0) > 0
   );
@@ -42,6 +55,15 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
     (initialData?.options.length ?? 0) > 0
   );
   const [showSeo, setShowSeo] = useState(false);
+
+  // Image files handled by custom hook
+  const { selectedFiles, error: imageError, addFiles, removeFile, reorderFiles } =
+    useImageHandler();
+
+  // FormData builder
+  const { buildFormData } = useProductForm();
+
+  // ── React Hook Form ────────────────────────────────────────────────────────
 
   const {
     control,
@@ -67,37 +89,36 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
     },
   });
 
-  const selectedCategoryIds = useWatch({ control, name: "categoryIds" });
+  const selectedCategoryIds: string[] = useWatch({ control, name: "categoryIds" }) ?? [];
 
   // Field arrays
-  const {
-    fields: attrFields,
-    append: appendAttr,
-    remove: removeAttr,
-  } = useFieldArray({ control, name: "attributes" });
-
+  const { fields: attrFields, append: appendAttr, remove: removeAttr } = useFieldArray({
+    control,
+    name: "attributes",
+  });
   const {
     fields: optionFields,
     append: appendOption,
     remove: removeOption,
   } = useFieldArray({ control, name: "options" });
-
   const {
     fields: variantFields,
     append: appendVariant,
     remove: removeVariant,
   } = useFieldArray({ control, name: "variants" });
 
-  const toggleCategory = (id: string) => {
-    const current = selectedCategoryIds ?? [];
-    const next = current.includes(id)
-      ? current.filter((c: string) => c !== id)
-      : [...current, id];
-    setValue("categoryIds", next, { shouldValidate: true });
+  // ── Submit ────────────────────────────────────────────────────────────────
+
+  const handleFormSubmit = async (values: CreateProductInput) => {
+    const formData = buildFormData(values, selectedFiles);
+    await onSubmit(formData);
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+
       {/* ── BASIC INFO ── */}
       <div className={SECTION}>
         <p className={SECTION_TITLE}>Basic Information</p>
@@ -106,7 +127,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
           <FormField<ProductFormValues>
             name="name"
             control={control}
-            label="Product Name"
+            label="Product Name *"
             placeholder="e.g. Sunnah Oud Perfume"
           />
           <FormField<ProductFormValues>
@@ -124,18 +145,26 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
           placeholder="Brief tagline shown in listings"
         />
 
-        <div className="flex flex-col gap-1.5">
-          <label className={SECTION_TITLE}>Description *</label>
-          <textarea
-            {...register("description")}
-            rows={4}
-            placeholder="Full product description (min 10 characters)"
-            className="w-full rounded-md border border-brand-beige-dark bg-white px-3 py-2 text-sm font-sans text-brand-charcoal placeholder:text-brand-stone/60 focus:outline-none focus:ring-2 focus:ring-brand-emerald/30 focus:border-brand-emerald transition-colors resize-none"
-          />
-          {errors.description && (
-            <p className="text-xs text-red-500 font-sans">{errors.description.message}</p>
+        <FormField<ProductFormValues>
+          name="sku"
+          control={control}
+          label="SKU"
+          placeholder="Unique identifier (optional)"
+        />
+
+        {/* TipTap Rich Text Editor for description */}
+        <Controller
+          name="description"
+          control={control}
+          render={({ field }) => (
+            <RichTextEditor
+              label="Description"
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              error={errors.description?.message}
+            />
           )}
-        </div>
+        />
       </div>
 
       {/* ── PRICING & STOCK ── */}
@@ -146,7 +175,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
           <FormField<ProductFormValues>
             name="price"
             control={control}
-            label="Price ($) *"
+            label="Price *"
             type="number"
             step="0.01"
             placeholder="0.00"
@@ -154,7 +183,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
           <FormField<ProductFormValues>
             name="compareAtPrice"
             control={control}
-            label="Compare At ($)"
+            label="Compare At"
             type="number"
             step="0.01"
             placeholder="Optional"
@@ -168,76 +197,46 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <FormField<ProductFormValues>
-            name="sku"
-            control={control}
-            label="SKU"
-            placeholder="Unique identifier (optional)"
-          />
-          <div className="flex items-end gap-6 pb-1">
-            <label className="flex items-center gap-2 text-sm font-sans text-brand-charcoal cursor-pointer">
-              <input type="checkbox" {...register("isActive")} className="rounded" />
-              Active
-            </label>
-            <label className="flex items-center gap-2 text-sm font-sans text-brand-charcoal cursor-pointer">
-              <input type="checkbox" {...register("isFeatured")} className="rounded" />
-              Featured
-            </label>
-          </div>
+        <div className="flex items-center gap-6">
+          <label className="flex items-center gap-2 text-sm font-sans text-brand-charcoal cursor-pointer select-none">
+            <input
+              type="checkbox"
+              {...register("isActive")}
+              className="h-4 w-4 rounded border-brand-beige-dark text-brand-gold focus:ring-brand-gold"
+            />
+            Active
+          </label>
+          <label className="flex items-center gap-2 text-sm font-sans text-brand-charcoal cursor-pointer select-none">
+            <input
+              type="checkbox"
+              {...register("isFeatured")}
+              className="h-4 w-4 rounded border-brand-beige-dark text-brand-gold focus:ring-brand-gold"
+            />
+            Featured
+          </label>
         </div>
       </div>
 
       {/* ── CATEGORIES ── */}
       <div className={SECTION}>
         <p className={SECTION_TITLE}>Categories *</p>
-        {categories.length === 0 ? (
-          <p className="text-xs text-brand-stone font-sans">Loading categories…</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => {
-              const selected = selectedCategoryIds?.includes(cat.id);
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => toggleCategory(cat.id)}
-                  className={`rounded-full px-3 py-1 text-xs font-sans font-medium border transition-colors ${
-                    selected
-                      ? "bg-brand-gold text-brand-cream border-brand-gold"
-                      : "bg-white text-brand-charcoal border-brand-beige-dark hover:border-brand-gold"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              );
-            })}
-          </div>
-        )}
-        {errors.categoryIds && (
-          <p className="text-xs text-red-500 font-sans">{errors.categoryIds.message}</p>
-        )}
+        <CategoryTreeSelector
+          categories={categoryTree}
+          selectedIds={selectedCategoryIds}
+          onChange={(ids) => setValue("categoryIds", ids, { shouldValidate: true })}
+          error={errors.categoryIds?.message}
+        />
       </div>
 
-      {/* ── IMAGE ── */}
+      {/* ── IMAGES ── */}
       <div className={SECTION}>
-        <p className={SECTION_TITLE}>Primary Image</p>
-        <Input
-          label="Image URL"
-          placeholder="https://cdn.example.com/product.jpg"
-          defaultValue={initialData?.images[0]?.url ?? ""}
-          onChange={(e) => {
-            const url = e.target.value.trim();
-            setValue(
-              "images",
-              url ? [{ url, publicId: url, position: 0 }] : [],
-              { shouldValidate: true }
-            );
-          }}
+        <ImageUploadSection
+          selectedFiles={selectedFiles}
+          onAddFiles={addFiles}
+          onRemoveFile={removeFile}
+          onReorderFiles={reorderFiles}
+          uploadError={imageError}
         />
-        <p className="text-xs text-brand-stone font-sans">
-          Enter a direct image URL. Multiple image upload will be supported in the next iteration.
-        </p>
       </div>
 
       {/* ── ATTRIBUTES (collapsible) ── */}
@@ -249,8 +248,8 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
         >
           <span className={SECTION_TITLE}>
             Attributes{" "}
-            <span className="text-brand-stone/60">
-              (optional — e.g. Material, Weight, Origin)
+            <span className="font-normal text-brand-stone/60 normal-case tracking-normal">
+              (optional — e.g. Material, Weight)
             </span>
           </span>
           {showAttributes ? (
@@ -278,7 +277,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="mt-0 shrink-0 text-red-400 hover:text-red-600"
+                  className="shrink-0 text-red-400 hover:text-red-600"
                   onClick={() => removeAttr(idx)}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -291,7 +290,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
               size="sm"
               onClick={() => appendAttr({ key: "", value: "", position: attrFields.length })}
             >
-              <Plus className="h-3.5 w-3.5" /> Add Attribute
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add Attribute
             </Button>
           </div>
         )}
@@ -306,7 +305,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
         >
           <span className={SECTION_TITLE}>
             Options & Variants{" "}
-            <span className="text-brand-stone/60">
+            <span className="font-normal text-brand-stone/60 normal-case tracking-normal">
               (optional — e.g. Size, Color)
             </span>
           </span>
@@ -321,11 +320,12 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
           <div className="px-4 pb-4 border-t border-brand-beige-dark pt-3 space-y-4">
             {/* Options */}
             <div className="space-y-3">
-              <p className="text-xs uppercase tracking-widest text-brand-stone font-sans">
-                Options
-              </p>
+              <p className={SECTION_TITLE}>Options</p>
               {optionFields.map((field, idx) => (
-                <div key={field.id} className="p-3 rounded-md border border-brand-beige-dark bg-brand-cream/30 space-y-2">
+                <div
+                  key={field.id}
+                  className="p-3 rounded-md border border-brand-beige-dark bg-brand-cream/30 space-y-2"
+                >
                   <div className="flex items-center gap-2">
                     <Input
                       {...register(`options.${idx}.name`)}
@@ -356,20 +356,23 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
                 size="sm"
                 onClick={() => appendOption({ name: "", values: [] })}
               >
-                <Plus className="h-3.5 w-3.5" /> Add Option
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add Option
               </Button>
             </div>
 
             {/* Variants */}
             {optionFields.length > 0 && (
               <div className="space-y-3">
-                <p className="text-xs uppercase tracking-widest text-brand-stone font-sans">
-                  Variants
-                </p>
+                <p className={SECTION_TITLE}>Variants</p>
                 {variantFields.map((field, idx) => (
-                  <div key={field.id} className="p-3 rounded-md border border-brand-beige-dark bg-white space-y-2">
+                  <div
+                    key={field.id}
+                    className="p-3 rounded-md border border-brand-beige-dark bg-white space-y-2"
+                  >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-brand-stone font-sans">Variant {idx + 1}</span>
+                      <span className="text-xs text-brand-stone font-sans">
+                        Variant {idx + 1}
+                      </span>
                       <Button
                         type="button"
                         variant="ghost"
@@ -388,7 +391,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
                       />
                       <Input
                         {...register(`variants.${idx}.price`, { valueAsNumber: true })}
-                        label="Price ($)"
+                        label="Price"
                         type="number"
                         step="0.01"
                         placeholder="Optional"
@@ -407,11 +410,9 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    appendVariant({ optionValues: {}, stock: 0 })
-                  }
+                  onClick={() => appendVariant({ optionValues: {}, stock: 0 })}
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add Variant
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Variant
                 </Button>
               </div>
             )}
@@ -426,7 +427,12 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
           onClick={() => setShowSeo((s) => !s)}
           className="w-full flex items-center justify-between px-4 py-3 hover:bg-brand-cream/50 transition-colors"
         >
-          <span className={SECTION_TITLE}>SEO <span className="text-brand-stone/60">(optional)</span></span>
+          <span className={SECTION_TITLE}>
+            SEO{" "}
+            <span className="font-normal text-brand-stone/60 normal-case tracking-normal">
+              (optional)
+            </span>
+          </span>
           {showSeo ? (
             <ChevronUp className="h-4 w-4 text-brand-stone" />
           ) : (

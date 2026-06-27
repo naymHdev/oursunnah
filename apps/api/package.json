@@ -13,12 +13,14 @@
     "@our-sunnah/database": "workspace:*",
     "@our-sunnah/validation": "workspace:*",
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.3.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "geoip-lite": "^1.4.10",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
     "slugify": "^1.6.9",
     "ua-parser-js": "^1.0.40",
     "zod": "^3.24.1"
@@ -30,6 +32,7 @@
     "@types/express": "^5.0.0",
     "@types/geoip-lite": "^1.4.4",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^1.4.11",
     "@types/node": "^22.15.30",
     "tsx": "^4.19.2",
     "typescript": "^5.5.3"

@@ -5,6 +5,10 @@ import { ShoppingBag, Search, Menu, X, Heart, ChevronDown } from 'lucide-react';
 import type { CategoryTreeNode } from '@/types/catalog';
 import { CollectionsMegaMenu } from './navbar/CollectionsMegaMenu';
 import { CollectionsAccordion } from './navbar/CollectionsAccordion';
+import CartDrawer from './cart/CartDrawer';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { openCartDrawer } from '@/lib/redux/slices/uiSlice';
+import { selectCartCount } from '@/lib/redux/slices/cartSlice';
 
 const navLinks = [
   { label: 'Collections', href: '#collections', hasDropdown: true },
@@ -28,7 +32,8 @@ export default function Navbar({ categories }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
-  const [cartCount] = useState(2);
+  const cartCount = useAppSelector(selectCartCount);
+  const dispatch = useAppDispatch();
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -129,7 +134,7 @@ export default function Navbar({ categories }: NavbarProps) {
                 <button className={`transition-colors duration-300 hover:text-brand-gold ${scrolled ? 'text-brand-charcoal/60' : 'text-brand-cream/70'}`} aria-label="Wishlist">
                   <Heart size={18} strokeWidth={1.5} />
                 </button>
-                <button className={`relative transition-colors duration-300 hover:text-brand-gold ${scrolled ? 'text-brand-charcoal/60' : 'text-brand-cream/70'}`} aria-label="Cart">
+                <button onClick={() => dispatch(openCartDrawer())} className={`relative transition-colors duration-300 hover:text-brand-gold ${scrolled ? 'text-brand-charcoal/60' : 'text-brand-cream/70'}`} aria-label="Cart">
                   <ShoppingBag size={18} strokeWidth={1.5} />
                   {cartCount > 0 && (
                     <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-brand-gold text-brand-cream text-[9px] flex items-center justify-center font-sans font-medium">
@@ -142,7 +147,7 @@ export default function Navbar({ categories }: NavbarProps) {
 
             {/* Mobile right */}
             <div className="lg:hidden flex items-center gap-4">
-              <button className={`relative transition-colors duration-300 hover:text-brand-gold ${scrolled ? 'text-brand-charcoal/60' : 'text-brand-cream/70'}`}>
+              <button onClick={() => dispatch(openCartDrawer())} className={`relative transition-colors duration-300 hover:text-brand-gold ${scrolled ? 'text-brand-charcoal/60' : 'text-brand-cream/70'}`} aria-label="Cart">
                 <ShoppingBag size={20} strokeWidth={1.5} />
                 {cartCount > 0 && (
                   <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-brand-gold text-brand-cream text-[9px] flex items-center justify-center">
@@ -200,6 +205,8 @@ export default function Navbar({ categories }: NavbarProps) {
           </div>
         </div>
       </div>
+
+      <CartDrawer />
     </>
   );
 }

@@ -3,6 +3,7 @@ import { baseApi } from "./api/baseApi";
 import authReducer from "./slices/authSlice";
 import cartReducer from "./slices/cartSlice";
 import wishlistReducer from "./slices/wishlistSlice";
+import uiReducer from "./slices/uiSlice";
 import { writeStorage } from "./persist/storage";
 
 export const CART_STORAGE_KEY = "our-sunnah:cart";
@@ -31,6 +32,7 @@ export const makeStore = () =>
       auth: authReducer,
       cart: cartReducer,
       wishlist: wishlistReducer,
+      ui: uiReducer,
       [baseApi.reducerPath]: baseApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>

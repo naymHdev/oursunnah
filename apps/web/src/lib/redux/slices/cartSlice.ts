@@ -9,6 +9,10 @@ import type { RootState } from "../store";
  * payment, so a stale snapshot here is a UX-only concern, not a money one.
  */
 export type CartItem = {
+  /** Present once this line has been synced to the server cart (i.e.
+   *  for any logged-in user after their first add/merge). Absent for
+   *  guest-only items that exist purely in localStorage. */
+  id?: string;
   productId: string;
   variantId: string | null;
   name: string;

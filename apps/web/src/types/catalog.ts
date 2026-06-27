@@ -112,3 +112,55 @@ export type ProductQueryParams = {
   isFeatured?: boolean;
   sort?: "price_asc" | "price_desc" | "newest";
 };
+
+// ---------- Cart ----------
+
+export type CartItemProductRef = {
+  id: string;
+  name: string;
+  slug: string;
+  price: string;
+  stock: number;
+  isActive: boolean;
+  images: { url: string }[];
+};
+
+export type CartItemVariantOptionValue = {
+  value: string;
+  option: { name: string };
+};
+
+export type CartItemVariantRef = {
+  id: string;
+  price: string | null;
+  stock: number;
+  image: string | null;
+  optionValues: CartItemVariantOptionValue[];
+};
+
+export type CartItemDto = {
+  id: string;
+  cartId: string;
+  productId: string;
+  variantId: string | null;
+  quantity: number;
+  product: CartItemProductRef;
+  variant: CartItemVariantRef | null;
+};
+
+export type CartDto = {
+  id: string;
+  userId: string;
+  items: CartItemDto[];
+  updatedAt: string;
+};
+
+export type AddCartItemPayload = {
+  productId: string;
+  variantId?: string | null;
+  quantity?: number;
+};
+
+export type MergeCartPayload = {
+  items: { productId: string; variantId?: string | null; quantity: number }[];
+};

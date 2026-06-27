@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { Heart, ShoppingBag, Star, ArrowRight, Eye } from 'lucide-react';
+import { useAddToCart } from '@/lib/cart/useAddToCart';
 
 const products = [
   {
@@ -108,6 +109,7 @@ function ProductCard({ product, delay = 0 }: { product: typeof products[0]; dela
   const [hovered, setHovered] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const addToCart = useAddToCart();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -119,6 +121,19 @@ function ProductCard({ product, delay = 0 }: { product: typeof products[0]; dela
   }, []);
 
   const handleCart = () => {
+    // NOTE: this section still renders mock data (see `products` array
+    // above) — real catalog integration is a separate, not-yet-done
+    // step. The cart system itself is fully wired here so it's ready
+    // the moment FeaturedProducts switches to live API data.
+    addToCart({
+      productId: `mock-${product.id}`,
+      variantId: null,
+      name: product.name,
+      slug: `mock-${product.id}`,
+      image: product.image,
+      price: product.price,
+    });
+
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   };

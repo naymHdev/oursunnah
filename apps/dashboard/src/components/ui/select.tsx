@@ -105,3 +105,45 @@ const SelectLabel = React.forwardRef<
 SelectLabel.displayName = SelectPrimitive.Label.displayName;
 
 export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectItem, SelectLabel };
+
+// Convenience wrapper for simple option lists
+interface SimpleSelectProps {
+  options: { value: string; label: string }[];
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder?: string;
+  label?: string;
+  error?: string;
+  disabled?: boolean;
+  className?: string;
+}
+
+export function SimpleSelect({
+  options,
+  value,
+  onValueChange,
+  placeholder,
+  label,
+  error,
+  disabled,
+  className,
+}: SimpleSelectProps) {
+  return (
+    <SelectPrimitive.Root
+      value={value}
+      onValueChange={onValueChange}
+      disabled={disabled}
+    >
+      <SelectTrigger label={label} error={error} className={className}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </SelectPrimitive.Root>
+  );
+}

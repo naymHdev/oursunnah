@@ -37,28 +37,28 @@ function toFormDefaults(product: Product): Partial<CreateProductInput> {
     isFeatured: product.isFeatured,
     metaTitle: product.metaTitle ?? undefined,
     metaDescription: product.metaDescription ?? undefined,
-    categoryIds: product.categories.map((c) => c.id),
-    images: product.images.map(({ url, publicId, position }) => ({
+    categoryIds: (product.categories ?? []).map((c) => c.id),
+    images: (product.images ?? []).map(({ url, publicId, position }) => ({
       url,
       publicId,
       position,
     })),
-    attributes: product.attributes.map(({ key, value, position }) => ({
+    attributes: (product.attributes ?? []).map(({ key, value, position }) => ({
       key,
       value,
       position,
     })),
-    options: product.options.map((opt) => ({
+    options: (product.options ?? []).map((opt) => ({
       name: opt.name,
-      values: opt.values.map((v) => v.value),
+      values: (opt.values ?? []).map((v) => v.value),
     })),
-    variants: product.variants.map((v) => ({
+    variants: (product.variants ?? []).map((v) => ({
       sku: v.sku ?? undefined,
       price: v.price ? parseFloat(v.price) : undefined,
       stock: v.stock,
       image: v.image ?? undefined,
       optionValues: Object.fromEntries(
-        v.optionValues.map((ov) => [ov.option.name, ov.value])
+        (v.optionValues ?? []).map((ov) => [ov.option.name, ov.value])
       ),
     })),
   };

@@ -4,7 +4,7 @@ import type { ApiResponse, CategoryTreeNode } from "@/types/catalog";
 // Server-only: points at the internal/origin API directly, same as
 // `src/auth.ts`. Never bundled to the client — that's what
 // NEXT_PUBLIC_API_URL (used by the RTK Query baseApi) is for.
-const API_URL = process.env.API_URL ?? "http://localhost:5000";
+const API_URL = process.env.API_URL ?? "http://localhost:5001";
 
 /**
  * Fetches the category tree for the navbar mega-menu (and anywhere else

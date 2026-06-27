@@ -32,15 +32,35 @@ export default function Navbar({ categories }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const cartCount = useAppSelector(selectCartCount);
   const dispatch = useAppDispatch();
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Tracks the header's real rendered height (announcement bar +
+  // nav row, which both change with the `scrolled` state) so the
+  // full-width mega menu can sit flush underneath it instead of using
+  // a guessed/hardcoded offset.
+  useEffect(() => {
+    if (!headerRef.current) return;
+    const el = headerRef.current;
+    const update = () => setHeaderHeight(el.getBoundingClientRect().bottom);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    window.addEventListener('scroll', update, { passive: true });
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', update);
+    };
+  }, [scrolled]);
 
   useEffect(() => () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -66,6 +86,7 @@ export default function Navbar({ categories }: NavbarProps) {
 
       {/* Main navbar */}
       <header
+        ref={headerRef}
         className={`fixed top-8 left-0 right-0 z-50 transition-all duration-700 ease-luxury ${
           scrolled
             ? 'bg-brand-cream/95 backdrop-blur-md shadow-nav top-0'
@@ -96,7 +117,6 @@ export default function Navbar({ categories }: NavbarProps) {
                         className={`transition-transform duration-300 ${collectionsOpen ? 'rotate-180' : ''}`}
                       />
                     </a>
-                    <CollectionsMegaMenu categories={categories} open={collectionsOpen} />
                   </div>
                 ) : (
                   <a key={link.label} href={link.href} className={`nav-link flex items-center gap-1 ${scrolled ? 'text-brand-charcoal/80' : 'text-brand-cream/90 after:bg-brand-gold'}`}>
@@ -165,6 +185,10 @@ export default function Navbar({ categories }: NavbarProps) {
           </div>
         </div>
       </header>
+
+      <div onMouseEnter={openCollections} onMouseLeave={scheduleCloseCollections}>
+        <CollectionsMegaMenu categories={categories} open={collectionsOpen} topOffset={headerHeight} />
+      </div>
 
       {/* Mobile menu */}
       <div

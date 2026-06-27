@@ -25,13 +25,7 @@ function CategorySubtree({ nodes, depth, onNavigate }: CategorySubtreeProps) {
   const isFirstLevel = depth === 1;
 
   return (
-    <ul
-      className={
-        isFirstLevel
-          ? "mt-3 flex flex-col gap-2.5"
-          : "mt-1.5 mb-1 ml-3 flex flex-col gap-1.5 border-l border-brand-stone/15 pl-3"
-      }
-    >
+    <ul className={isFirstLevel ? "mt-4 flex flex-col gap-2.5" : "mt-1.5 mb-1 flex flex-col gap-1.5"}>
       {nodes.map((node) => (
         <li key={node.category.id}>
           <a
@@ -40,7 +34,7 @@ function CategorySubtree({ nodes, depth, onNavigate }: CategorySubtreeProps) {
             className={
               isFirstLevel
                 ? "text-body-md text-brand-charcoal/65 hover:text-brand-gold transition-colors duration-300"
-                : "text-caption text-brand-charcoal/50 hover:text-brand-gold transition-colors duration-300"
+                : "text-caption text-brand-charcoal/45 hover:text-brand-gold transition-colors duration-300"
             }
           >
             {node.category.name}
@@ -63,7 +57,7 @@ export function CategoryColumn({ node, onNavigate }: CategoryColumnProps) {
       <a
         href={`/category/${node.category.slug}`}
         onClick={onNavigate}
-        className="font-serif text-lg text-brand-charcoal hover:text-brand-gold transition-colors duration-300"
+        className="text-label uppercase tracking-widest text-brand-charcoal/90 hover:text-brand-gold transition-colors duration-300"
       >
         {node.category.name}
       </a>

@@ -22,15 +22,17 @@ export type TCategory = {
 
 export type TCategoryTree = TCategory & { children: TCategoryTree[] };
 
+// Alias used by ProductForm
+export type CategoryItem = TCategory;
+export type CategoryTreeResponse = { data: TCategoryTree[] };
+
 const categoryApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    // GET /categories — full tree (public)
     getCategoryTree: build.query<{ data: TCategoryTree[] }, void>({
       query: () => "/categories",
       providesTags: [tagTypes.category],
     }),
 
-    // POST /categories
     createCategory: build.mutation<{ data: TCategory }, CreateCategoryInput>({
       query: (body) => ({
         url: "/categories",
@@ -40,7 +42,6 @@ const categoryApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.category],
     }),
 
-    // PATCH /categories/:id
     updateCategory: build.mutation<
       { data: TCategory },
       { id: string; body: UpdateCategoryInput }
@@ -53,7 +54,6 @@ const categoryApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.category],
     }),
 
-    // DELETE /categories/:id
     deleteCategory: build.mutation<void, string>({
       query: (id) => ({
         url: `/categories/${id}`,
@@ -62,7 +62,6 @@ const categoryApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.category],
     }),
 
-    // PATCH /categories/reorder
     reorderCategories: build.mutation<void, ReorderCategoriesInput>({
       query: (body) => ({
         url: "/categories/reorder",

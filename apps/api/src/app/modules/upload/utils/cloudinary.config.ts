@@ -30,7 +30,6 @@ export const uploadToCloudinary = (
       {
         folder: productId ? `${folder}/${productId}` : folder, // Nested folder for products
         resource_type: "auto",
-        format: "auto", // auto webp for modern browsers
         quality: "auto:good", // auto-optimize quality
         flags: ["progressive"], // Progressive JPEG for faster loading
         cache_control: "max-age=31536000,public,immutable", // 1 year cache

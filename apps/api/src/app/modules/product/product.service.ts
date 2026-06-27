@@ -187,7 +187,35 @@ const getProductBySlug = async (slug: string) => {
     throw new AppError(404, "Product not found");
   }
 
-  return product;
+  // Aggregate rating for schema.org AggregateRating (SEO structured data)
+  const [ratingAgg, ratingDistribution] = await Promise.all([
+    prisma.review.aggregate({
+      where: { productId: product.id },
+      _avg: { rating: true },
+      _count: { rating: true },
+    }),
+    prisma.review.groupBy({
+      by: ["rating"],
+      where: { productId: product.id },
+      _count: { rating: true },
+    }),
+  ]);
+
+  const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (const row of ratingDistribution) {
+    distribution[row.rating] = row._count.rating;
+  }
+
+  return {
+    ...product,
+    aggregateRating: {
+      ratingValue: ratingAgg._avg.rating
+        ? parseFloat(ratingAgg._avg.rating.toFixed(1))
+        : 0,
+      reviewCount: ratingAgg._count.rating,
+      ratingDistribution: distribution,
+    },
+  };
 };
 
 const updateProduct = async (id: string, payload: UpdateProductInput) => {
@@ -298,3 +326,4 @@ export const ProductService = {
   updateProduct,
   deleteProduct,
 };
+

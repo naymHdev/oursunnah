@@ -2,6 +2,7 @@ import { Router } from "express";
 import { AuthRoutes } from "../modules/auth/auth.routes.js";
 import { CategoryRoutes } from "../modules/category/category.routes.js";
 import { ProductRoutes } from "../modules/product/product.routes.js";
+import { ReviewRoutes } from "../modules/review/review.routes.js";
 import { AnalyticsRoutes } from "../modules/analytics/analytics.routes.js";
 import { UserRoutes } from "../modules/user/user.routes.js";
 import { CartRoutes } from "../modules/cart/cart.routes.js";
@@ -23,4 +24,8 @@ moduleRoutes.forEach((route) => {
   router.use(route.path, route.route);
 });
 
+// Reviews nested under products — mergeParams lets :productId flow into ReviewRoutes
+router.use("/products/:productId/reviews", ReviewRoutes);
+
 export default router;
+

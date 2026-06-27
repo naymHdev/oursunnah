@@ -2,6 +2,7 @@
 
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { createProductSchema, type CreateProductInput } from "@our-sunnah/validation";
 import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
@@ -17,6 +18,8 @@ type ProductFormProps = {
   onSubmit: (data: CreateProductInput) => Promise<void>;
   isLoading: boolean;
 };
+
+type ProductFormValues = z.input<typeof createProductSchema>;
 
 function flattenCategories(
   categories: { id: string; name: string; children?: { id: string; name: string }[] }[]
@@ -46,7 +49,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<CreateProductInput>({
+  } = useForm<ProductFormValues, unknown, CreateProductInput>({
     resolver: zodResolver(createProductSchema),
     defaultValues: {
       name: "",
@@ -100,13 +103,13 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
         <p className={SECTION_TITLE}>Basic Information</p>
 
         <div className="grid grid-cols-2 gap-3">
-          <FormField<CreateProductInput>
+          <FormField<ProductFormValues>
             name="name"
             control={control}
             label="Product Name"
             placeholder="e.g. Sunnah Oud Perfume"
           />
-          <FormField<CreateProductInput>
+          <FormField<ProductFormValues>
             name="brand"
             control={control}
             label="Brand"
@@ -114,7 +117,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
           />
         </div>
 
-        <FormField<CreateProductInput>
+        <FormField<ProductFormValues>
           name="shortDescription"
           control={control}
           label="Short Description"
@@ -140,7 +143,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
         <p className={SECTION_TITLE}>Pricing & Stock</p>
 
         <div className="grid grid-cols-3 gap-3">
-          <FormField<CreateProductInput>
+          <FormField<ProductFormValues>
             name="price"
             control={control}
             label="Price ($) *"
@@ -148,7 +151,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
             step="0.01"
             placeholder="0.00"
           />
-          <FormField<CreateProductInput>
+          <FormField<ProductFormValues>
             name="compareAtPrice"
             control={control}
             label="Compare At ($)"
@@ -156,7 +159,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
             step="0.01"
             placeholder="Optional"
           />
-          <FormField<CreateProductInput>
+          <FormField<ProductFormValues>
             name="stock"
             control={control}
             label="Stock *"
@@ -166,7 +169,7 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <FormField<CreateProductInput>
+          <FormField<ProductFormValues>
             name="sku"
             control={control}
             label="SKU"
@@ -433,13 +436,13 @@ export function ProductForm({ defaultValues, initialData, onSubmit, isLoading }:
 
         {showSeo && (
           <div className="px-4 pb-4 border-t border-brand-beige-dark pt-3 grid grid-cols-2 gap-3">
-            <FormField<CreateProductInput>
+            <FormField<ProductFormValues>
               name="metaTitle"
               control={control}
               label="Meta Title"
               placeholder="SEO page title"
             />
-            <FormField<CreateProductInput>
+            <FormField<ProductFormValues>
               name="metaDescription"
               control={control}
               label="Meta Description"

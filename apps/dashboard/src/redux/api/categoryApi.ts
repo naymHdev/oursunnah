@@ -20,7 +20,9 @@ export type TCategory = {
   _count?: { products: number };
 };
 
-export type TCategoryTree = TCategory & { children: TCategoryTree[] };
+export type TCategoryTree = Omit<TCategory, "children"> & {
+  children: TCategoryTree[];
+};
 
 // Alias used by ProductForm
 export type CategoryItem = TCategory;

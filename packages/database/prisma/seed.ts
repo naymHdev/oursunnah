@@ -368,7 +368,7 @@ async function seedProducts() {
             },
           ],
         },
-        productCategories: {
+        categories: {
           create: productData.categoryIds.map((categoryId) => ({
             category: { connect: { id: categoryId } },
           })),

@@ -3,7 +3,10 @@
 import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createProductSchema, type CreateProductInput } from "@our-sunnah/validation";
+import {
+  createProductSchema,
+  type CreateProductInput,
+} from "@our-sunnah/validation";
 import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -49,16 +52,21 @@ export function ProductForm({
 
   // Collapsible optional sections
   const [showAttributes, setShowAttributes] = useState(
-    (initialData?.attributes.length ?? 0) > 0
+    (initialData?.attributes?.length ?? 0) > 0,
   );
   const [showVariants, setShowVariants] = useState(
-    (initialData?.options.length ?? 0) > 0
+    (initialData?.options?.length ?? 0) > 0,
   );
   const [showSeo, setShowSeo] = useState(false);
 
   // Image files handled by custom hook
-  const { selectedFiles, error: imageError, addFiles, removeFile, reorderFiles } =
-    useImageHandler();
+  const {
+    selectedFiles,
+    error: imageError,
+    addFiles,
+    removeFile,
+    reorderFiles,
+  } = useImageHandler();
 
   // FormData builder
   const { buildFormData } = useProductForm();
@@ -89,10 +97,15 @@ export function ProductForm({
     },
   });
 
-  const selectedCategoryIds: string[] = useWatch({ control, name: "categoryIds" }) ?? [];
+  const selectedCategoryIds: string[] =
+    useWatch({ control, name: "categoryIds" }) ?? [];
 
   // Field arrays
-  const { fields: attrFields, append: appendAttr, remove: removeAttr } = useFieldArray({
+  const {
+    fields: attrFields,
+    append: appendAttr,
+    remove: removeAttr,
+  } = useFieldArray({
     control,
     name: "attributes",
   });
@@ -118,7 +131,6 @@ export function ProductForm({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-
       {/* ── BASIC INFO ── */}
       <div className={SECTION}>
         <p className={SECTION_TITLE}>Basic Information</p>
@@ -223,7 +235,9 @@ export function ProductForm({
         <CategoryTreeSelector
           categories={categoryTree}
           selectedIds={selectedCategoryIds}
-          onChange={(ids) => setValue("categoryIds", ids, { shouldValidate: true })}
+          onChange={(ids) =>
+            setValue("categoryIds", ids, { shouldValidate: true })
+          }
           error={errors.categoryIds?.message}
         />
       </div>
@@ -288,7 +302,9 @@ export function ProductForm({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => appendAttr({ key: "", value: "", position: attrFields.length })}
+              onClick={() =>
+                appendAttr({ key: "", value: "", position: attrFields.length })
+              }
             >
               <Plus className="h-3.5 w-3.5 mr-1" /> Add Attribute
             </Button>
@@ -390,14 +406,18 @@ export function ProductForm({
                         placeholder="Optional"
                       />
                       <Input
-                        {...register(`variants.${idx}.price`, { valueAsNumber: true })}
+                        {...register(`variants.${idx}.price`, {
+                          valueAsNumber: true,
+                        })}
                         label="Price"
                         type="number"
                         step="0.01"
                         placeholder="Optional"
                       />
                       <Input
-                        {...register(`variants.${idx}.stock`, { valueAsNumber: true })}
+                        {...register(`variants.${idx}.stock`, {
+                          valueAsNumber: true,
+                        })}
                         label="Stock"
                         type="number"
                         placeholder="0"
@@ -459,7 +479,13 @@ export function ProductForm({
       </div>
 
       {/* ── SUBMIT ── */}
-      <Button type="submit" variant="gold" size="md" loading={isLoading} className="w-full">
+      <Button
+        type="submit"
+        variant="gold"
+        size="md"
+        loading={isLoading}
+        className="w-full"
+      >
         {isLoading ? "Saving…" : "Save Product"}
       </Button>
     </form>

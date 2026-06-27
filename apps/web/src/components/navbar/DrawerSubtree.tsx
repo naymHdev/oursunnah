@@ -20,17 +20,20 @@ type DrawerSubtreeItemProps = {
 
 /**
  * One row + its own collapse state. Every node with children starts
- * collapsed — nothing auto-expands at any depth — and only opens when
- * its chevron is clicked. The category name stays a plain link so
- * clicking it still navigates; the chevron is the only thing that
- * toggles the nested list.
+ * collapsed — nothing auto-expands at any depth — and opens on hover
+ * (mouse enter on the row), closing again on mouse leave. The category
+ * name stays a plain link so clicking it still navigates straight
+ * through; hover is purely for previewing the nested list.
  */
 function DrawerSubtreeItem({ node, isFirstLevel, depth, onNavigate }: DrawerSubtreeItemProps) {
   const [expanded, setExpanded] = useState(false);
   const hasChildren = node.children.length > 0;
 
   return (
-    <li>
+    <li
+      onMouseEnter={() => hasChildren && setExpanded(true)}
+      onMouseLeave={() => hasChildren && setExpanded(false)}
+    >
       <div
         className={
           isFirstLevel
@@ -51,19 +54,12 @@ function DrawerSubtreeItem({ node, isFirstLevel, depth, onNavigate }: DrawerSubt
           <span className="truncate">{node.category.name}</span>
         </a>
         {hasChildren && (
-          <button
-            type="button"
-            onClick={() => setExpanded((prev) => !prev)}
-            aria-expanded={expanded}
-            aria-label={`${node.category.name} sub-categories`}
-            className="shrink-0 p-1 -m-1 text-brand-charcoal/40 hover:text-brand-gold transition-colors duration-300"
-          >
-            <ChevronRight
-              size={isFirstLevel ? 14 : 12}
-              strokeWidth={1.5}
-              className={`transition-transform duration-300 ${expanded ? "rotate-90" : ""}`}
-            />
-          </button>
+          <ChevronRight
+            size={isFirstLevel ? 14 : 12}
+            strokeWidth={1.5}
+            aria-hidden="true"
+            className={`shrink-0 mr-1 text-brand-charcoal/40 transition-transform duration-300 ${expanded ? "rotate-90" : ""}`}
+          />
         )}
       </div>
 

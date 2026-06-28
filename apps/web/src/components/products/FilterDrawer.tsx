@@ -225,11 +225,11 @@ export default function FilterDrawer({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-[60] flex justify-end">
           <div className="absolute inset-0 bg-brand-charcoal/40" onClick={closeDrawer} />
 
           <div className="relative h-full w-full max-w-sm overflow-y-auto bg-brand-cream shadow-xl animate-in slide-in-from-right duration-300">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-charcoal/10 bg-brand-cream p-6">
+            <div className="sticky top-0 z-[61] flex items-center justify-between border-b border-brand-charcoal/10 bg-brand-cream p-6">
               <h2 className="font-serif text-xl text-brand-charcoal">Filter &amp; Sort</h2>
               <button
                 type="button"

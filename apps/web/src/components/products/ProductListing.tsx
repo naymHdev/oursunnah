@@ -106,7 +106,10 @@ export default function ProductListing({
   return (
     <>
       {/* Header row: category label (left) — Filter & Sort + density toggle (right), same baseline */}
-      <div className="flex items-center justify-between border-b border-brand-charcoal/10 pb-4 mb-8 sticky top-20 bg-brand-cream z-20 pt-3">
+      <div
+        className="flex items-center justify-between border-b border-brand-charcoal/10 pb-4 mb-8 sticky bg-brand-cream z-20 pt-3"
+        style={{ top: 'var(--navbar-height, 5rem)' }}
+      >
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {headerLeft ?? (showLabel ? (
             <p className="text-label uppercase tracking-widest text-brand-charcoal/70">{label}</p>

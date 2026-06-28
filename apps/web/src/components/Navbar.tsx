@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { ShoppingBag, Search, Menu, X, Heart, ChevronDown } from 'lucide-react';
 import type { CategoryTreeNode } from '@/types/catalog';
 import { CollectionsMegaMenu } from './navbar/CollectionsMegaMenu';
@@ -30,6 +31,7 @@ type NavbarProps = {
 };
 
 export default function Navbar({ categories }: NavbarProps) {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
@@ -40,10 +42,16 @@ export default function Navbar({ categories }: NavbarProps) {
   const headerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    setScrolled(pathname !== '/');
+  }, [pathname]);
+
+  useEffect(() => {
+    if (pathname !== '/') return;
+
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [pathname]);
 
   // Tracks the header's real rendered height (announcement bar +
   // nav row, which both change with the `scrolled` state) so the
@@ -52,7 +60,11 @@ export default function Navbar({ categories }: NavbarProps) {
   useEffect(() => {
     if (!headerRef.current) return;
     const el = headerRef.current;
-    const update = () => setHeaderHeight(el.getBoundingClientRect().bottom);
+    const update = () => {
+      const bottom = el.getBoundingClientRect().bottom;
+      setHeaderHeight(bottom);
+      document.documentElement.style.setProperty('--navbar-height', `${bottom}px`);
+    };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(el);
@@ -60,6 +72,7 @@ export default function Navbar({ categories }: NavbarProps) {
     return () => {
       observer.disconnect();
       window.removeEventListener('scroll', update);
+      document.documentElement.style.removeProperty('--navbar-height');
     };
   }, [scrolled]);
 
@@ -128,7 +141,7 @@ export default function Navbar({ categories }: NavbarProps) {
             </nav>
 
             {/* Logo */}
-            <a href="#" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center group">
+            <a href="/" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center group">
               <div className="flex items-center gap-2.5">
                 <div className={`w-px h-5 transition-colors duration-700 ${scrolled ? 'bg-brand-gold' : 'bg-brand-gold/70'}`} />
                 <span className={`font-serif text-2xl lg:text-3xl tracking-[0.25em] uppercase transition-colors duration-700 ${scrolled ? 'text-brand-charcoal' : 'text-brand-cream'}`}>

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { ShoppingBag, Search, Menu, X, Heart, ChevronDown } from 'lucide-react';
 import type { CategoryTreeNode } from '@/types/catalog';
-import { CollectionsMegaMenu } from './navbar/CollectionsMegaMenu';
+import { MegaMenuPanel } from './navbar/MegaMenuPanel';
 import { CollectionsAccordion } from './navbar/CollectionsAccordion';
 import CartDrawer from './cart/CartDrawer';
 import SearchModal from './search/SearchModal';
@@ -201,7 +201,7 @@ export default function Navbar({ categories }: NavbarProps) {
       </header>
 
       <div onMouseEnter={openCollections} onMouseLeave={scheduleCloseCollections}>
-        <CollectionsMegaMenu categories={categories} open={collectionsOpen} topOffset={headerHeight} />
+        <MegaMenuPanel categories={categories} open={collectionsOpen} topOffset={headerHeight} />
       </div>
 
       {/* Mobile menu */}

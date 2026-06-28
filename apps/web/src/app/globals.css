@@ -55,6 +55,13 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #D4AF6A;
   }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer components {

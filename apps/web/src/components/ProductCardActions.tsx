@@ -5,6 +5,7 @@ import { Heart, ShoppingBag, Eye } from 'lucide-react';
 import { useAddToCart } from '@/lib/cart/useAddToCart';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { toggleWishlist, selectIsWishlisted } from '@/lib/redux/slices/wishlistSlice';
+import { openQuickView } from '@/lib/redux/slices/quickViewSlice';
 
 type Props = {
   productId: string;
@@ -54,8 +55,8 @@ export default function ProductCardActions({ productId, slug, name, image, price
       </button>
 
       {/* Quick view */}
-      <a
-        href={`/products/${slug}`}
+      <button
+        onClick={() => dispatch(openQuickView(slug))}
         aria-label="Quick view"
         className={`absolute top-14 right-4 z-10 w-9 h-9 rounded-full bg-brand-cream flex items-center justify-center
           text-brand-charcoal/60 hover:text-brand-emerald
@@ -64,7 +65,7 @@ export default function ProductCardActions({ productId, slug, name, image, price
         style={{ transitionDelay: hovered ? '50ms' : '0ms' }}
       >
         <Eye size={14} />
-      </a>
+      </button>
 
       {/* Add to cart bar */}
       <button
@@ -86,4 +87,3 @@ export default function ProductCardActions({ productId, slug, name, image, price
     </div>
   );
 }
-

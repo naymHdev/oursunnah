@@ -4,6 +4,7 @@ import authReducer from "./slices/authSlice";
 import cartReducer from "./slices/cartSlice";
 import wishlistReducer from "./slices/wishlistSlice";
 import uiReducer from "./slices/uiSlice";
+import quickViewReducer from "./slices/quickViewSlice";
 import { writeStorage } from "./persist/storage";
 
 export const CART_STORAGE_KEY = "our-sunnah:cart";
@@ -33,6 +34,7 @@ export const makeStore = () =>
       cart: cartReducer,
       wishlist: wishlistReducer,
       ui: uiReducer,
+      quickView: quickViewReducer,
       [baseApi.reducerPath]: baseApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>

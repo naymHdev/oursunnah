@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Grid2x2, Grid3x3 } from 'lucide-react';
 import { useGetProductsQuery } from '@/lib/redux/api/productApi';
@@ -16,7 +17,7 @@ import ProductGridSkeleton from './ProductGridSkeleton';
 /**
  * Combines the header bar (category label + Filter & Sort + density
  * toggle) and the infinite-scroll grid into one client component so the
- * grid-density toggle (2 vs 4 columns) can live in local state without
+ * grid-density toggle (4 vs 6 columns) can live in local state without
  * having to lift it between separate server-rendered siblings.
  *
  * Replaces the old `ResultsBar` (which showed a "X products" count on
@@ -30,6 +31,8 @@ export default function ProductListing({
   initialMeta,
   baseParams,
   hideSoldOut = false,
+  showLabel = true,
+  headerLeft,
 }: {
   /** Left-aligned label shown instead of the product count, e.g. category name or "All Products". */
   label: string;
@@ -39,8 +42,10 @@ export default function ProductListing({
   initialMeta: ApiMeta;
   baseParams: Omit<ProductQueryParams, 'page'>;
   hideSoldOut?: boolean;
+  showLabel?: boolean;
+  headerLeft?: ReactNode;
 }) {
-  const [cols, setCols] = useState<2 | 4>(4);
+  const [cols, setCols] = useState<4 | 6>(4);
 
   const [items, setItems] = useState(initialItems);
   const [page, setPage] = useState(initialMeta.page);
@@ -95,39 +100,37 @@ export default function ProductListing({
   const gridColsClass =
     cols === 4
       ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
-      : 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-2';
+      : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6';
+  const priorityCount = cols === 6 ? 6 : 4;
 
   return (
     <>
       {/* Header row: category label (left) — Filter & Sort + density toggle (right), same baseline */}
-      <div className="flex items-center justify-between border-b border-brand-charcoal/10 pb-6 mb-10 sticky top-20 bg-brand-cream z-20 pt-4">
-        <p className="text-label uppercase tracking-widest text-brand-charcoal/70">{label}</p>
+      <div className="flex items-center justify-between border-b border-brand-charcoal/10 pb-4 mb-8 sticky top-20 bg-brand-cream z-20 pt-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {headerLeft ?? (showLabel ? (
+            <p className="text-label uppercase tracking-widest text-brand-charcoal/70">{label}</p>
+          ) : (
+            <span aria-hidden />
+          ))}
+        </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-3">
           <FilterDrawer categories={categories} activeCategorySlug={activeCategorySlug} />
 
-          <div className="hidden sm:flex items-center gap-1 border border-brand-charcoal/15">
+          <div className="hidden sm:flex items-center border border-brand-charcoal/15">
             <button
               type="button"
-              onClick={() => setCols(4)}
-              aria-label="Compact grid"
-              aria-pressed={cols === 4}
-              className={`p-2 transition-colors duration-300 ${
-                cols === 4 ? 'bg-brand-charcoal text-brand-cream' : 'text-brand-charcoal/60 hover:text-brand-charcoal'
+              onClick={() => setCols((current) => (current === 4 ? 6 : 4))}
+              aria-label={cols === 4 ? 'Switch to 6-column grid' : 'Switch to 4-column grid'}
+              aria-pressed={cols === 6}
+              className={`flex h-10 w-10 items-center justify-center transition-colors duration-300 ${
+                cols === 6
+                  ? 'bg-brand-charcoal text-brand-cream'
+                  : 'text-brand-charcoal/60 hover:text-brand-charcoal'
               }`}
             >
-              <Grid3x3 size={16} strokeWidth={1.5} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setCols(2)}
-              aria-label="Large grid"
-              aria-pressed={cols === 2}
-              className={`p-2 transition-colors duration-300 ${
-                cols === 2 ? 'bg-brand-charcoal text-brand-cream' : 'text-brand-charcoal/60 hover:text-brand-charcoal'
-              }`}
-            >
-              <Grid2x2 size={16} strokeWidth={1.5} />
+              {cols === 4 ? <Grid3x3 size={15} strokeWidth={1.5} /> : <Grid2x2 size={15} strokeWidth={1.5} />}
             </button>
           </div>
         </div>
@@ -135,7 +138,7 @@ export default function ProductListing({
 
       <div className={`grid ${gridColsClass} gap-x-6 gap-y-12`}>
         {visibleItems.map((product, i) => (
-          <ProductCard key={product.id} product={product} priority={i < 4} />
+          <ProductCard key={product.id} product={product} priority={i < priorityCount} />
         ))}
       </div>
 

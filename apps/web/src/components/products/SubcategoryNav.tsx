@@ -59,7 +59,7 @@ export default function SubcategoryNav({
 
   return (
     <nav
-      className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 sm:mx-0 sm:px-0 scrollbar-none"
+      className="flex max-w-full gap-1.5 overflow-x-auto overflow-y-hidden scrollbar-none"
       aria-label="Subcategories"
     >
       {children.map((node) => {
@@ -68,7 +68,7 @@ export default function SubcategoryNav({
           <Link
             key={node.category.id}
             href={`/category/${node.category.slug}`}
-            className={`shrink-0 whitespace-nowrap px-4 py-2 text-label uppercase tracking-widest border transition-colors duration-300 ${
+            className={`inline-flex h-10 shrink-0 items-center whitespace-nowrap px-3 text-[10px] leading-none uppercase tracking-[0.18em] border transition-colors duration-300 ${
               isActive
                 ? 'bg-brand-charcoal text-brand-cream border-brand-charcoal'
                 : 'text-brand-charcoal/70 border-brand-charcoal/15 hover:border-brand-charcoal/50'

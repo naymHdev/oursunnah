@@ -61,7 +61,7 @@ export default async function ProductsPage({
     <div className="min-h-screen bg-brand-cream">
       <Navbar categories={categories} />
       <main className="pt-32 pb-24 max-w-7xl mx-auto px-6">
-        <h1 className="font-serif text-4xl text-brand-charcoal mb-10">All Products</h1>
+        <h1 className="sr-only">All Products</h1>
         <Suspense key={JSON.stringify(search)} fallback={<ProductGridSkeleton />}>
           <ProductsContent search={search} categories={categories} />
         </Suspense>

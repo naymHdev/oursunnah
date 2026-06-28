@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductListing from '@/components/products/ProductListing';
 import ProductGridSkeleton from '@/components/products/ProductGridSkeleton';
-import SubcategoryNav, { findRootChain } from '@/components/products/SubcategoryNav';
+import SubcategoryNav, { findCategoryNode, findRootChain } from '@/components/products/SubcategoryNav';
 import { getCategoryBySlug, getCategoryTree, getProducts } from '@/lib/api/server';
 import type { ProductQueryParams } from '@/types/catalog';
 
@@ -45,11 +45,15 @@ async function CategoryContent({
   categorySlug,
   categories,
   label,
+  subcategoryChildren,
+  activeTopLevelSlug,
 }: {
   search: Search;
   categorySlug: string;
   categories: Awaited<ReturnType<typeof getCategoryTree>>;
   label: string;
+  subcategoryChildren: Awaited<ReturnType<typeof getCategoryTree>>[number]['children'];
+  activeTopLevelSlug: string;
 }) {
   const params = parseParams(search, categorySlug);
   const { items, meta } = await getProducts(params);
@@ -63,6 +67,7 @@ async function CategoryContent({
       initialMeta={meta}
       baseParams={params}
       hideSoldOut={search.hideSoldOut === '1'}
+      headerLeft={<SubcategoryNav children={subcategoryChildren} activeSlug={activeTopLevelSlug} />}
     />
   );
 }
@@ -84,24 +89,23 @@ export default async function CategoryPage({
 
   if (!category) notFound();
 
-  // Always show the ROOT ancestor's children as the pill nav — never the
-  // current node's own children — so the nav stays visible even when
-  // browsing a leaf category that has no children of its own (a deep
-  // category that simply has no products yet should still show its
-  // siblings, not disappear).
+  // Keep the root heading at the top, but render the current category's
+  // direct children in the shared header row so nested categories reveal
+  // the next level of the tree when you click into them.
   const chain = findRootChain(categories, slug);
   const rootNode = chain?.[0] ?? null;
   const rootName = rootNode?.category.name ?? category.name;
-  // Highlight whichever immediate child of the root the current page falls under
-  // (or the root itself if we're already at depth 1).
-  const activeTopLevelSlug = chain && chain.length > 1 ? chain[1].category.slug : slug;
+  const currentNode = findCategoryNode(categories, slug);
+  const parentNode = chain?.[chain.length - 2] ?? null;
+  const subcategorySourceNode =
+    currentNode?.children.length ? currentNode : parentNode ?? currentNode;
+  const subcategoryChildren = subcategorySourceNode?.children ?? [];
 
   return (
     <div className="min-h-screen bg-brand-cream">
       <Navbar categories={categories} />
       <main className="pt-32 pb-24 max-w-7xl mx-auto px-6">
         <h1 className="font-serif text-4xl text-brand-charcoal mb-6">{rootName}</h1>
-        <SubcategoryNav children={rootNode?.children ?? []} activeSlug={activeTopLevelSlug} />
         {category.description && (
           <p className="text-body-md text-brand-charcoal/60 max-w-2xl mt-6 mb-2">
             {category.description}
@@ -113,6 +117,8 @@ export default async function CategoryPage({
             categorySlug={slug}
             categories={categories}
             label={category.name}
+            subcategoryChildren={subcategoryChildren}
+            activeTopLevelSlug={slug}
           />
         </Suspense>
       </main>

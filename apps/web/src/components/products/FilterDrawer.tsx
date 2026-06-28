@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { X, SlidersHorizontal } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ChevronRight, SlidersHorizontal, X } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { CategoryTreeNode } from '@/types/catalog';
 
 const SORT_OPTIONS = [
@@ -11,15 +11,113 @@ const SORT_OPTIONS = [
   { value: 'price_desc', label: 'Price: High to Low' },
 ];
 
-/** Flattens the category tree into a single list of {slug, name, depth} for the filter checklist. */
-function flattenCategories(
-  nodes: CategoryTreeNode[],
-  depth = 0
-): { slug: string; name: string; depth: number }[] {
-  return nodes.flatMap((node) => [
-    { slug: node.category.slug, name: node.category.name, depth },
-    ...flattenCategories(node.children, depth + 1),
-  ]);
+function findCategoryPath(nodes: CategoryTreeNode[], slug: string): CategoryTreeNode[] | null {
+  for (const node of nodes) {
+    if (node.category.slug === slug) return [node];
+    const childPath = findCategoryPath(node.children, slug);
+    if (childPath) return [node, ...childPath];
+  }
+  return null;
+}
+
+function buildExpandedSet(nodes: CategoryTreeNode[], slug: string) {
+  const path = findCategoryPath(nodes, slug);
+  const expanded = new Set<string>();
+
+  if (!path) return expanded;
+
+  path.slice(0, -1).forEach((node) => expanded.add(node.category.slug));
+  const selected = path[path.length - 1];
+  if (selected?.children.length) expanded.add(selected.category.slug);
+
+  return expanded;
+}
+
+function CategoryTree({
+  nodes,
+  depth,
+  selectedSlug,
+  expandedSlugs,
+  onToggleExpand,
+  onSelect,
+}: {
+  nodes: CategoryTreeNode[];
+  depth: number;
+  selectedSlug: string;
+  expandedSlugs: Set<string>;
+  onToggleExpand: (slug: string) => void;
+  onSelect: (slug: string) => void;
+}) {
+  if (nodes.length === 0) return null;
+
+  return (
+    <ul
+      className={
+        depth === 0
+          ? 'space-y-1'
+          : 'mt-1 space-y-1 border-l border-brand-charcoal/10 pl-3'
+      }
+    >
+      {nodes.map((node) => {
+        const hasChildren = node.children.length > 0;
+        const isExpanded = expandedSlugs.has(node.category.slug);
+        const isSelected = selectedSlug === node.category.slug;
+
+        return (
+          <li key={node.category.id}>
+            <div className="flex items-center gap-2">
+              <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="category"
+                  checked={isSelected}
+                  onChange={() => onSelect(node.category.slug)}
+                  className="peer sr-only"
+                />
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center border border-brand-charcoal/35 bg-transparent transition-colors duration-300 peer-checked:border-brand-charcoal peer-checked:bg-brand-charcoal">
+                  <span className="h-1.5 w-1.5 scale-0 bg-brand-cream transition-transform duration-300 peer-checked:scale-100" />
+                </span>
+                <span
+                  className={`min-w-0 flex-1 truncate text-[10px] leading-none uppercase tracking-[0.18em] transition-colors duration-300 ${
+                    isSelected ? 'text-brand-charcoal' : 'text-brand-charcoal/75'
+                  }`}
+                >
+                  {node.category.name}
+                </span>
+              </label>
+
+              {hasChildren && (
+                <button
+                  type="button"
+                  onClick={() => onToggleExpand(node.category.slug)}
+                  aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${node.category.name}`}
+                  aria-expanded={isExpanded}
+                  className="flex h-4 w-4 shrink-0 items-center justify-center text-brand-charcoal/45 transition-colors duration-300 hover:text-brand-charcoal"
+                >
+                  <ChevronRight
+                    size={12}
+                    strokeWidth={1.5}
+                    className={`transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`}
+                  />
+                </button>
+              )}
+            </div>
+
+            {hasChildren && isExpanded && (
+              <CategoryTree
+                nodes={node.children}
+                depth={depth + 1}
+                selectedSlug={selectedSlug}
+                expandedSlugs={expandedSlugs}
+                onToggleExpand={onToggleExpand}
+                onSelect={onSelect}
+              />
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 /**
@@ -42,13 +140,12 @@ export default function FilterDrawer({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const flatCategories = flattenCategories(categories);
-
   const [sort, setSort] = useState(searchParams.get('sort') ?? 'newest');
   const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') ?? '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') ?? '');
   const [hideSoldOut, setHideSoldOut] = useState(searchParams.get('hideSoldOut') === '1');
   const [category, setCategory] = useState(activeCategorySlug ?? searchParams.get('category') ?? '');
+  const [expandedSlugs, setExpandedSlugs] = useState<Set<string>>(new Set());
 
   // Keep local state in sync if the URL changes externally (e.g. back/forward nav)
   useEffect(() => {
@@ -56,7 +153,27 @@ export default function FilterDrawer({
     setMinPrice(searchParams.get('minPrice') ?? '');
     setMaxPrice(searchParams.get('maxPrice') ?? '');
     setHideSoldOut(searchParams.get('hideSoldOut') === '1');
-  }, [searchParams]);
+    setCategory(activeCategorySlug ?? searchParams.get('category') ?? '');
+  }, [searchParams, activeCategorySlug]);
+
+  useEffect(() => {
+    if (!open) return;
+    setExpandedSlugs(buildExpandedSet(categories, category));
+  }, [categories, category, open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeDrawer();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open]);
 
   const apply = () => {
     const params = new URLSearchParams();
@@ -65,8 +182,6 @@ export default function FilterDrawer({
     if (maxPrice) params.set('maxPrice', maxPrice);
     if (hideSoldOut) params.set('hideSoldOut', '1');
 
-    // On the generic /products page, category is a query param.
-    // On /category/[slug], switching category should navigate to the new route instead.
     if (activeCategorySlug !== undefined) {
       const target = category ? `/category/${category}` : '/products';
       router.push(`${target}?${params.toString()}`);
@@ -83,41 +198,56 @@ export default function FilterDrawer({
     setMaxPrice('');
     setHideSoldOut(false);
     setCategory(activeCategorySlug ?? '');
+    setExpandedSlugs(new Set());
     router.push(activeCategorySlug ? `/category/${activeCategorySlug}` : pathname);
     setOpen(false);
   };
+
+  const toggleExpand = (slug: string) => {
+    setExpandedSlugs((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  };
+
+  const closeDrawer = () => setOpen(false);
 
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 text-label uppercase tracking-widest text-brand-charcoal/80 hover:text-brand-gold transition-colors duration-300 border border-brand-charcoal/15 px-4 py-2.5"
+        className="flex h-10 items-center gap-1.5 whitespace-nowrap border border-brand-charcoal/15 px-3 text-[10px] leading-none uppercase tracking-[0.18em] text-brand-charcoal/80 transition-colors duration-300 hover:text-brand-gold"
       >
-        <SlidersHorizontal size={14} strokeWidth={1.5} />
-        Filter &amp; Sort
+        <SlidersHorizontal size={13} strokeWidth={1.5} />
+        Filter
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-brand-charcoal/40"
-            onClick={() => setOpen(false)}
-          />
+          <div className="absolute inset-0 bg-brand-charcoal/40" onClick={closeDrawer} />
 
-          {/* Panel */}
-          <div className="relative w-full max-w-sm h-full bg-brand-cream overflow-y-auto shadow-xl animate-in slide-in-from-right duration-300">
-            <div className="flex items-center justify-between p-6 border-b border-brand-charcoal/10 sticky top-0 bg-brand-cream z-10">
+          <div className="relative h-full w-full max-w-sm overflow-y-auto bg-brand-cream shadow-xl animate-in slide-in-from-right duration-300">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-charcoal/10 bg-brand-cream p-6">
               <h2 className="font-serif text-xl text-brand-charcoal">Filter &amp; Sort</h2>
-              <button onClick={() => setOpen(false)} aria-label="Close">
-                <X size={20} className="text-brand-charcoal/60" />
+              <button
+                type="button"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  closeDrawer();
+                }}
+                aria-label="Close"
+                className="relative z-20 -mr-2 flex h-10 w-10 items-center justify-center pointer-events-auto text-brand-charcoal/60 transition-colors duration-300 hover:text-brand-charcoal"
+              >
+                <X size={20} className="pointer-events-none text-brand-charcoal/60" />
               </button>
             </div>
 
-            <div className="p-6 space-y-8">
-              {/* Sort */}
+            <div className="space-y-8 p-6">
               <fieldset>
-                <legend className="text-label uppercase tracking-widest text-brand-charcoal/90 mb-3">
+                <legend className="mb-3 text-label uppercase tracking-widest text-brand-charcoal/90">
                   Sort By
                 </legend>
                 <div className="space-y-2.5">
@@ -129,54 +259,50 @@ export default function FilterDrawer({
                         value={opt.value}
                         checked={sort === opt.value}
                         onChange={() => setSort(opt.value)}
-                        className="accent-brand-charcoal"
+                        className="sr-only peer"
                       />
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center border border-brand-charcoal/35 bg-transparent transition-colors duration-300 peer-checked:border-brand-charcoal peer-checked:bg-brand-charcoal">
+                        <span className="h-1.5 w-1.5 scale-0 bg-brand-cream transition-transform duration-300 peer-checked:scale-100" />
+                      </span>
                       <span className="text-body-md text-brand-charcoal/80">{opt.label}</span>
                     </label>
                   ))}
                 </div>
               </fieldset>
 
-              {/* Category */}
-              {flatCategories.length > 0 && (
-                <fieldset>
-                  <legend className="text-label uppercase tracking-widest text-brand-charcoal/90 mb-3">
-                    Category
-                  </legend>
-                  <div className="space-y-2.5 max-h-64 overflow-y-auto pr-2">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="category"
-                        checked={category === ''}
-                        onChange={() => setCategory('')}
-                        className="accent-brand-charcoal"
-                      />
-                      <span className="text-body-md text-brand-charcoal/80">All Categories</span>
-                    </label>
-                    {flatCategories.map((c) => (
-                      <label
-                        key={c.slug}
-                        className="flex items-center gap-3 cursor-pointer"
-                        style={{ paddingLeft: c.depth * 14 }}
-                      >
-                        <input
-                          type="radio"
-                          name="category"
-                          checked={category === c.slug}
-                          onChange={() => setCategory(c.slug)}
-                          className="accent-brand-charcoal"
-                        />
-                        <span className="text-body-md text-brand-charcoal/80">{c.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              )}
-
-              {/* Price range */}
               <fieldset>
-                <legend className="text-label uppercase tracking-widest text-brand-charcoal/90 mb-3">
+                <legend className="mb-3 text-label uppercase tracking-widest text-brand-charcoal/90">
+                  Category
+                </legend>
+
+                <div className="max-h-80 space-y-1 overflow-y-auto pr-2">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="category"
+                      checked={category === ''}
+                      onChange={() => setCategory('')}
+                      className="sr-only peer"
+                    />
+                    <span className="flex h-4 w-4 shrink-0 items-center justify-center border border-brand-charcoal/35 bg-transparent transition-colors duration-300 peer-checked:border-brand-charcoal peer-checked:bg-brand-charcoal">
+                      <span className="h-1.5 w-1.5 scale-0 bg-brand-cream transition-transform duration-300 peer-checked:scale-100" />
+                    </span>
+                    <span className="text-body-md text-brand-charcoal/80">All Categories</span>
+                  </label>
+
+                  <CategoryTree
+                    nodes={categories}
+                    depth={0}
+                    selectedSlug={category}
+                    expandedSlugs={expandedSlugs}
+                    onToggleExpand={toggleExpand}
+                    onSelect={setCategory}
+                  />
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend className="mb-3 text-label uppercase tracking-widest text-brand-charcoal/90">
                   Price
                 </legend>
                 <div className="flex items-center gap-3">
@@ -186,7 +312,7 @@ export default function FilterDrawer({
                     placeholder="Min"
                     value={minPrice}
                     onChange={(e) => setMinPrice(e.target.value)}
-                    className="w-full border border-brand-charcoal/20 bg-transparent px-3 py-2 text-body-md text-brand-charcoal focus:outline-none focus:border-brand-charcoal/50"
+                    className="w-full border border-brand-charcoal/20 bg-transparent px-3 py-2 text-body-md text-brand-charcoal focus:border-brand-charcoal/50 focus:outline-none"
                   />
                   <span className="text-brand-charcoal/40">—</span>
                   <input
@@ -195,33 +321,35 @@ export default function FilterDrawer({
                     placeholder="Max"
                     value={maxPrice}
                     onChange={(e) => setMaxPrice(e.target.value)}
-                    className="w-full border border-brand-charcoal/20 bg-transparent px-3 py-2 text-body-md text-brand-charcoal focus:outline-none focus:border-brand-charcoal/50"
+                    className="w-full border border-brand-charcoal/20 bg-transparent px-3 py-2 text-body-md text-brand-charcoal focus:border-brand-charcoal/50 focus:outline-none"
                   />
                 </div>
               </fieldset>
 
-              {/* Hide sold out — client-side filter, see InfiniteProductGrid */}
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={hideSoldOut}
                   onChange={(e) => setHideSoldOut(e.target.checked)}
-                  className="accent-brand-charcoal"
+                  className="sr-only peer"
                 />
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center border border-brand-charcoal/35 bg-transparent transition-colors duration-300 peer-checked:border-brand-charcoal peer-checked:bg-brand-charcoal">
+                  <span className="h-1.5 w-1.5 scale-0 bg-brand-cream transition-transform duration-300 peer-checked:scale-100" />
+                </span>
                 <span className="text-body-md text-brand-charcoal/80">Hide Sold Out Products</span>
               </label>
             </div>
 
-            <div className="sticky bottom-0 bg-brand-cream border-t border-brand-charcoal/10 p-6 flex gap-3">
+            <div className="sticky bottom-0 flex gap-3 border-t border-brand-charcoal/10 bg-brand-cream p-6">
               <button
                 onClick={reset}
-                className="flex-1 py-3 text-label uppercase tracking-widest text-brand-charcoal/70 border border-brand-charcoal/20 hover:border-brand-charcoal/50 transition-colors duration-300"
+                className="flex-1 border border-brand-charcoal/20 py-3 text-label uppercase tracking-widest text-brand-charcoal/70 transition-colors duration-300 hover:border-brand-charcoal/50"
               >
                 Reset
               </button>
               <button
                 onClick={apply}
-                className="flex-1 py-3 text-label uppercase tracking-widest text-brand-cream bg-brand-charcoal hover:bg-brand-emerald transition-colors duration-300"
+                className="flex-1 bg-brand-charcoal py-3 text-label uppercase tracking-widest text-brand-cream transition-colors duration-300 hover:bg-brand-emerald"
               >
                 Apply
               </button>

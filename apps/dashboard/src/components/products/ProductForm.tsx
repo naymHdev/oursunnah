@@ -27,6 +27,7 @@ type ProductFormValues = z.input<typeof createProductSchema>;
 type ProductFormProps = {
   defaultValues?: Partial<CreateProductInput>;
   initialData?: Product;
+  initialImages?: { url: string; publicId: string; position: number }[];
   /** Receives a ready-to-send FormData (multipart: data + image files) */
   onSubmit: (formData: FormData) => Promise<void>;
   isLoading: boolean;
@@ -44,6 +45,7 @@ const SECTION_TITLE =
 export function ProductForm({
   defaultValues,
   initialData,
+  initialImages = [],
   onSubmit,
   isLoading,
 }: ProductFormProps) {
@@ -66,7 +68,7 @@ export function ProductForm({
     addFiles,
     removeFile,
     reorderFiles,
-  } = useImageHandler();
+  } = useImageHandler({ initialImages });
 
   // FormData builder
   const { buildFormData } = useProductForm();
@@ -93,6 +95,7 @@ export function ProductForm({
       variants: [],
       isActive: true,
       isFeatured: false,
+      isBestSeller: false,
       ...defaultValues,
     },
   });
@@ -225,6 +228,14 @@ export function ProductForm({
               className="h-4 w-4 rounded border-brand-beige-dark text-brand-gold focus:ring-brand-gold"
             />
             Featured
+          </label>
+          <label className="flex items-center gap-2 text-sm font-sans text-brand-charcoal cursor-pointer select-none">
+            <input
+              type="checkbox"
+              {...register("isBestSeller")}
+              className="h-4 w-4 rounded border-brand-beige-dark text-brand-gold focus:ring-brand-gold"
+            />
+            Best Seller
           </label>
         </div>
       </div>

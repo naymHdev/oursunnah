@@ -31,10 +31,14 @@ const authSlice = createSlice({
       state.accessToken = accessToken;
 
       // Mirror token in cookie so middleware can read it server-side
+      // No explicit expires — session cookie.
+      // The access token itself is 15 min; silent refresh keeps the session
+      // alive. If refresh fails, clearCredentials removes the cookie and
+      // Next.js middleware redirects to /login on the next navigation.
       Cookies.set("dashboard-access-token", accessToken, {
         path: "/",
-        expires: 1, // 1 day — matches backend accessToken TTL
         sameSite: "strict",
+        secure: typeof window !== "undefined" && window.location.protocol === "https:",
       });
     },
 
@@ -42,6 +46,11 @@ const authSlice = createSlice({
       state.user = null;
       state.accessToken = null;
       Cookies.remove("dashboard-access-token", { path: "/" });
+      // Force redirect to login — works from RTK Query middleware context
+      // where router hooks are not available.
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
     },
   },
 });

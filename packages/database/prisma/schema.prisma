@@ -172,6 +172,8 @@ model Product {
   stock            Int      @default(0)
   isActive         Boolean  @default(true)
   isFeatured       Boolean  @default(false)
+  isBestSeller     Boolean  @default(false)
+  totalSold        Int      @default(0)
   metaTitle        String?
   metaDescription  String?
 

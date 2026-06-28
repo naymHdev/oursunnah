@@ -144,9 +144,34 @@ const deleteProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const getNewArrivals = catchAsync(async (req: Request, res: Response) => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 12;
+  const products = await ProductService.getNewArrivals(limit);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "New arrivals retrieved successfully",
+    data: products,
+  });
+});
+
+const getBestSellers = catchAsync(async (req: Request, res: Response) => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 12;
+  const products = await ProductService.getBestSellers(limit);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Best sellers retrieved successfully",
+    data: products,
+  });
+});
+
 export const ProductController = {
   createProduct,
   getProducts,
+  getNewArrivals,
+  getBestSellers,
   getProductBySlug,
   updateProduct,
   deleteProduct,

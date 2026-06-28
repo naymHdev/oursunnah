@@ -62,6 +62,7 @@ export type Product = {
   stock: number;
   isActive: boolean;
   isFeatured: boolean;
+  isBestSeller: boolean;
   metaTitle: string | null;
   metaDescription: string | null;
   categories: ProductCategory[];

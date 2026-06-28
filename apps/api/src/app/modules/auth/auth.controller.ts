@@ -62,7 +62,20 @@ const socialLogin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const token = req.cookies?.refreshToken;
+  const { accessToken, user } = await AuthService.refreshAccessToken(token);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Token refreshed successfully",
+    data: { accessToken, user },
+  });
+});
+
 export const AuthController = {
+  refreshToken,
   createAccount,
   loginAccount,
   logoutAccount,

@@ -24,7 +24,48 @@ const rawBaseQuery = fetchBaseQuery({
   },
 });
 
-// Re-attempt with refreshed token on 401 — mirrors salon-chatbot pattern
+// Prevent concurrent refresh storms — if a refresh is already in flight,
+// queue up and wait for it rather than firing N parallel refresh calls.
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+const tryRefresh = async (
+  api: Parameters<BaseQueryFn>[1],
+  extraOptions: Parameters<BaseQueryFn>[2]
+): Promise<string | null> => {
+  if (isRefreshing && refreshPromise) return refreshPromise;
+
+  isRefreshing = true;
+  refreshPromise = rawBaseQuery(
+    { url: "/auth/refresh-token", method: "POST" },
+    api,
+    extraOptions
+  ).then((refreshResult) => {
+    const refreshData = refreshResult.data as
+      | { data: { accessToken: string; user: { id: string; name: string; email: string } } }
+      | undefined;
+
+    if (refreshData?.data?.accessToken) {
+      api.dispatch(
+        setCredentials({
+          user: refreshData.data.user,
+          accessToken: refreshData.data.accessToken,
+        })
+      );
+      return refreshData.data.accessToken;
+    }
+
+    // Refresh token expired or revoked — clear everything and redirect
+    api.dispatch(clearCredentials());
+    return null;
+  }).finally(() => {
+    isRefreshing = false;
+    refreshPromise = null;
+  });
+
+  return refreshPromise;
+};
+
 const baseQueryWithReauth: BaseQueryFn<
   FetchArgs | string,
   unknown,
@@ -33,35 +74,13 @@ const baseQueryWithReauth: BaseQueryFn<
   let result = await rawBaseQuery(args, api, extraOptions);
 
   if (result.error?.status === 401) {
-    // Try refreshing
-    const refreshResult = await rawBaseQuery(
-      { url: "/auth/refresh-token", method: "POST" },
-      api,
-      extraOptions
-    );
+    const newToken = await tryRefresh(api, extraOptions);
 
-    const refreshData = refreshResult.data as
-      | { data: { accessToken: string } }
-      | undefined;
-
-    if (refreshData?.data?.accessToken) {
-      const currentUser = (api.getState() as RootState).auth.user;
-
-      if (currentUser) {
-        api.dispatch(
-          setCredentials({
-            user: currentUser,
-            accessToken: refreshData.data.accessToken,
-          })
-        );
-      }
-
-      // Retry original request with new token
+    if (newToken) {
+      // Retry original request — prepareHeaders picks up the new token automatically
       result = await rawBaseQuery(args, api, extraOptions);
-    } else {
-      // Refresh failed — force logout
-      api.dispatch(clearCredentials());
     }
+    // If newToken is null, clearCredentials already redirected to /login
   }
 
   return result;

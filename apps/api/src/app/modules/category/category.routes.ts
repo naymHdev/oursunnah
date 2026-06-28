@@ -3,6 +3,7 @@ import { CategoryController } from "./category.controller.js";
 import { CategoryValidation } from "./category.validation.js";
 import validateRequest from "../../middleware/validateRequest.js";
 import auth from "../../middleware/auth.js";
+import { uploadSingle, handleMulterErrors } from "../upload/upload.middleware.js";
 
 const router = Router();
 
@@ -15,7 +16,8 @@ router.get("/:slug", CategoryController.getCategoryBySlug);
 router.post(
   "/",
   auth("EDITOR"),
-  validateRequest(CategoryValidation.createCategorySchema),
+  uploadSingle,
+  handleMulterErrors,
   CategoryController.createCategory,
 );
 router.patch(
@@ -27,7 +29,8 @@ router.patch(
 router.patch(
   "/:id",
   auth(),
-  validateRequest(CategoryValidation.updateCategorySchema),
+  uploadSingle,
+  handleMulterErrors,
   CategoryController.updateCategory,
 );
 router.delete("/:id", auth("ADMIN"), CategoryController.deleteCategory);

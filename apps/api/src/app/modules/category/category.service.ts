@@ -22,15 +22,27 @@ const assertParentExists = async (parentId: string) => {
   }
 };
 
-const createCategory = async (payload: CreateCategoryInput) => {
+const createCategory = async (
+  payload: CreateCategoryInput,
+  file?: Express.Multer.File
+) => {
   if (payload.parentId) {
     await assertParentExists(payload.parentId);
   }
 
   const slug = await generateUniqueSlug(payload.name, slugExists());
 
+  let image = payload.image ?? null;
+  let imagePublicId: string | null = null;
+
+  if (file) {
+    const uploaded = await UploadService.uploadSingleImage(file, "category");
+    image = uploaded.url;
+    imagePublicId = uploaded.publicId;
+  }
+
   return prisma.category.create({
-    data: { ...payload, slug },
+    data: { ...payload, slug, image, imagePublicId },
   });
 };
 
@@ -85,7 +97,11 @@ const getCategoryBySlug = async (slug: string) => {
   return { category, breadcrumb };
 };
 
-const updateCategory = async (id: string, payload: UpdateCategoryInput) => {
+const updateCategory = async (
+  id: string,
+  payload: UpdateCategoryInput,
+  file?: Express.Multer.File
+) => {
   const existing = await prisma.category.findUnique({ where: { id } });
   if (!existing) {
     throw new AppError(404, "Category not found");

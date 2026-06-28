@@ -13,11 +13,11 @@ import { openCartDrawer, openSearchModal } from '@/lib/redux/slices/uiSlice';
 import { selectCartCount } from '@/lib/redux/slices/cartSlice';
 
 const navLinks = [
-  { label: 'Collections', href: '#collections', hasDropdown: true },
-  { label: 'Prayer Essentials', href: '#prayer', hasDropdown: false },
-  { label: 'Modest Wear', href: '#wear', hasDropdown: false },
-  { label: 'Home', href: '#home-decor', hasDropdown: false },
-  { label: 'Our Story', href: '#story', hasDropdown: false },
+  { label: 'Collections', href: '/products', hasDropdown: true },
+  { label: 'Prayer Essentials', href: '/category/prayer-essentials', hasDropdown: false },
+  { label: 'Modest Wear', href: '/category/modest-wear', hasDropdown: false },
+  { label: 'New Arrivals', href: '/products?sort=new', hasDropdown: false },
+  { label: 'Best Sellers', href: '/products?sort=best_sellers', hasDropdown: false },
 ];
 
 // Absorbs the gap between the "Collections" trigger and the panel below

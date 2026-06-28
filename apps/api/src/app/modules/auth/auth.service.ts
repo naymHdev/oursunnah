@@ -32,6 +32,41 @@ const generateTokens = async (userId: string, role: import("@our-sunnah/database
   return { accessToken, refreshToken };
 };
 
+
+const refreshAccessToken = async (refreshToken: string) => {
+  if (!refreshToken) throw new AppError(401, "No refresh token provided");
+
+  // Verify the token is valid JWT
+  const { verifyRefreshToken } = await import("../../utils/jwt.js");
+  let payload: import("../../utils/jwt.js").JwtPayload;
+  try {
+    payload = verifyRefreshToken(refreshToken);
+  } catch {
+    throw new AppError(401, "Invalid or expired refresh token");
+  }
+
+  // Make sure it exists in DB and is not revoked
+  const stored = await prisma.refreshToken.findUnique({
+    where: { token: refreshToken },
+    include: { user: true },
+  });
+
+  if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
+    throw new AppError(401, "Refresh token has been revoked or expired");
+  }
+
+  // Issue new access token — refresh token stays the same (rotation not needed for dashboard)
+  const accessToken = signAccessToken({ userId: payload.userId, role: payload.role });
+
+  // Update lastActiveAt
+  await prisma.refreshToken.update({
+    where: { token: refreshToken },
+    data: { lastActiveAt: new Date() },
+  });
+
+  return { accessToken, user: { id: stored.user.id, name: stored.user.name, email: stored.user.email } };
+};
+
 const createAccount = async (payload: RegisterInput, meta?: RequestMeta) => {
   const existingUser = await prisma.user.findUnique({ where: { email: payload.email } });
   if (existingUser) {
@@ -110,6 +145,7 @@ const socialLogin = async (payload: SocialLoginInput, meta?: RequestMeta) => {
 };
 
 export const AuthService = {
+  refreshAccessToken,
   createAccount,
   loginAccount,
   logoutAccount,

@@ -51,6 +51,20 @@ export const productApi = baseApi.injectEndpoints({
       providesTags: ["Product"],
     }),
 
+    getNewArrivals: builder.query<ProductListItem[], { limit?: number } | void>({
+      query: (params) =>
+        `/products/new-arrivals${params?.limit ? `?limit=${params.limit}` : ""}`,
+      transformResponse: (response: ApiResponse<ProductListItem[]>) => response.data,
+      providesTags: ["Product"],
+    }),
+
+    getBestSellers: builder.query<ProductListItem[], { limit?: number } | void>({
+      query: (params) =>
+        `/products/best-sellers${params?.limit ? `?limit=${params.limit}` : ""}`,
+      transformResponse: (response: ApiResponse<ProductListItem[]>) => response.data,
+      providesTags: ["Product"],
+    }),
+
     getProductBySlug: builder.query<ProductDetail, string>({
       query: (slug) => `/products/${slug}`,
       transformResponse: (response: ApiResponse<ProductDetail>) => response.data,
@@ -62,5 +76,7 @@ export const productApi = baseApi.injectEndpoints({
 export const {
   useGetProductsQuery,
   useGetFeaturedProductsQuery,
+  useGetNewArrivalsQuery,
+  useGetBestSellersQuery,
   useGetProductBySlugQuery,
 } = productApi;

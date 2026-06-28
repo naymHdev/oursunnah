@@ -20,6 +20,9 @@ router.post(
 
 router.post("/logout", AuthController.logoutAccount);
 
+// Refresh access token using httpOnly refresh-token cookie
+router.post("/refresh-token", AuthController.refreshToken);
+
 router.post(
   "/social",
   requireInternalSecret,

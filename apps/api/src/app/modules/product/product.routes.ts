@@ -10,6 +10,8 @@ const router = Router();
 
 // Public — storefront
 router.get("/", ProductController.getProducts);
+router.get("/new-arrivals", ProductController.getNewArrivals);
+router.get("/best-sellers", ProductController.getBestSellers);
 router.get("/:slug", optionalAuth(), ProductController.getProductBySlug);
 
 // Protected — EDITOR, ADMIN, SUPER_ADMIN

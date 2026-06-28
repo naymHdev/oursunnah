@@ -40,6 +40,7 @@ export const createProductSchema = z.object({
   stock: z.number().int().min(0).default(0),
   isActive: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
+  isBestSeller: z.boolean().optional(),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
 

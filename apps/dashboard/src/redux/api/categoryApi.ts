@@ -45,13 +45,24 @@ const categoryApi = baseApi.injectEndpoints({
       providesTags: [tagTypes.category],
     }),
 
-    createCategory: build.mutation<{ data: TCategory }, CreateCategoryInput>({
-      query: (body) => ({ url: "/categories", method: "POST", body }),
+    createCategory: build.mutation<{ data: TCategory }, FormData>({
+      query: (formData) => ({
+        url: "/categories",
+        method: "POST",
+        body: formData,
+        // Let browser set Content-Type with boundary for multipart
+        formData: true,
+      }),
       invalidatesTags: [tagTypes.category],
     }),
 
-    updateCategory: build.mutation<{ data: TCategory }, { id: string; body: UpdateCategoryInput }>({
-      query: ({ id, body }) => ({ url: `/categories/${id}`, method: "PATCH", body }),
+    updateCategory: build.mutation<{ data: TCategory }, { id: string; body: FormData }>({
+      query: ({ id, body }) => ({
+        url: `/categories/${id}`,
+        method: "PATCH",
+        body,
+        formData: true,
+      }),
       invalidatesTags: [tagTypes.category],
     }),
 

@@ -97,6 +97,51 @@ const createOptionsAndVariants = async (
   }
 };
 
+
+const PRODUCT_LIST_INCLUDE = {
+  images: { orderBy: { position: "asc" as const }, take: 1 },
+  categories: { select: { id: true, name: true, slug: true } },
+};
+
+const getNewArrivals = async (limit = 12) => {
+  return prisma.product.findMany({
+    where: { isActive: true },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    include: PRODUCT_LIST_INCLUDE,
+  });
+};
+
+const getBestSellers = async (limit = 12) => {
+  // Primary: products manually flagged as best seller by admin
+  // Secondary: sorted by totalSold (auto-incremented on order DELIVERED)
+  return prisma.product.findMany({
+    where: { isActive: true },
+    orderBy: [
+      { isBestSeller: "desc" },
+      { totalSold: "desc" },
+      { createdAt: "desc" },
+    ],
+    take: limit,
+    include: PRODUCT_LIST_INCLUDE,
+  });
+};
+
+// Call this when an order transitions to DELIVERED status
+// to keep totalSold accurate for best-sellers ranking.
+const incrementTotalSold = async (
+  items: { productId: string; quantity: number }[]
+) => {
+  await Promise.all(
+    items.map(({ productId, quantity }) =>
+      prisma.product.update({
+        where: { id: productId },
+        data: { totalSold: { increment: quantity } },
+      })
+    )
+  );
+};
+
 const createProduct = async (payload: CreateProductInput) => {
   await assertCategoriesExist(payload.categoryIds);
   const slug = await generateUniqueSlug(payload.name, slugExists());
@@ -322,6 +367,9 @@ const deleteProduct = async (id: string) => {
 export const ProductService = {
   createProduct,
   getProducts,
+  getNewArrivals,
+  getBestSellers,
+  incrementTotalSold,
   getProductBySlug,
   updateProduct,
   deleteProduct,

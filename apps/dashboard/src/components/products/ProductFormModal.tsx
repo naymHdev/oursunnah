@@ -35,6 +35,7 @@ function toFormDefaults(product: Product): Partial<CreateProductInput> {
     stock: product.stock,
     isActive: product.isActive,
     isFeatured: product.isFeatured,
+    isBestSeller: product.isBestSeller,
     metaTitle: product.metaTitle ?? undefined,
     metaDescription: product.metaDescription ?? undefined,
     categoryIds: (product.categories ?? []).map((c) => c.id),
@@ -100,6 +101,7 @@ export function ProductFormModal({ open, onClose, product }: ProductFormModalPro
         <ProductForm
           defaultValues={product ? toFormDefaults(product) : undefined}
           initialData={product}
+          initialImages={product?.images ?? []}
           onSubmit={handleSubmit}
           isLoading={isLoading}
         />

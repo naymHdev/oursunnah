@@ -1,5 +1,6 @@
 import "server-only";
 import type {
+  FeaturedCategory,
   ApiMeta,
   ApiResponse,
   Category,
@@ -96,5 +97,18 @@ export async function getProducts(
     };
   } catch {
     return EMPTY_LIST_RESULT;
+  }
+}
+
+export async function getFeaturedCategories(): Promise<FeaturedCategory[]> {
+  try {
+    const response = await fetch(`${API_URL}/api/v1/categories/featured`, {
+      next: { revalidate: 3600 },
+    });
+    if (!response.ok) return [];
+    const { data }: ApiResponse<FeaturedCategory[]> = await response.json();
+    return data ?? [];
+  } catch {
+    return [];
   }
 }

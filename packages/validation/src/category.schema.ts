@@ -7,6 +7,7 @@ export const createCategorySchema = z.object({
   imagePublicId: z.string().optional(),
   parentId: z.string().optional().nullable(),
   position: z.number().int().optional(),
+  isFeatured: z.boolean().optional(),
 });
 
 export const updateCategorySchema = createCategorySchema.partial().extend({

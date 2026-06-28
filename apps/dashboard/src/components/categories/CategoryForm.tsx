@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SimpleSelect } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import type { TCategoryTree } from "@/redux/api/categoryApi";
 
 interface CategoryFormProps {
@@ -23,12 +24,11 @@ interface CategoryFormProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: CreateCategoryInput) => Promise<void>;
   isLoading: boolean;
-  categories: TCategoryTree[]; // for parent selector
+  categories: TCategoryTree[];
   editValues?: Partial<CreateCategoryInput & { id: string }>;
   mode: "create" | "edit";
 }
 
-// Flatten tree for select options
 function flattenTree(
   categories: TCategoryTree[],
   excludeId?: string,
@@ -68,10 +68,10 @@ export function CategoryForm({
       image: "",
       parentId: null,
       position: 0,
+      isFeatured: false,
     },
   });
 
-  // Populate form when editing
   useEffect(() => {
     if (editValues) {
       reset({
@@ -80,15 +80,10 @@ export function CategoryForm({
         image: editValues.image ?? "",
         parentId: editValues.parentId ?? null,
         position: editValues.position ?? 0,
+        isFeatured: editValues.isFeatured ?? false,
       });
     } else {
-      reset({
-        name: "",
-        description: "",
-        image: "",
-        parentId: null,
-        position: 0,
-      });
+      reset({ name: "", description: "", image: "", parentId: null, position: 0, isFeatured: false });
     }
   }, [editValues, reset, open]);
 
@@ -98,32 +93,23 @@ export function CategoryForm({
   ];
 
   const selectedParent = watch("parentId");
+  const isFeatured = watch("isFeatured");
 
   const handleFormSubmit = async (data: CreateCategoryInput) => {
-    // Convert empty string parentId to null
-    const payload: CreateCategoryInput = {
-      ...data,
-      parentId: data.parentId || null,
-    };
-    await onSubmit(payload);
+    await onSubmit({ ...data, parentId: data.parentId || null });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {mode === "create" ? "Add Category" : "Edit Category"}
-          </DialogTitle>
+          <DialogTitle>{mode === "create" ? "Add Category" : "Edit Category"}</DialogTitle>
           <DialogDescription>
-            {mode === "create"
-              ? "Create a new product category"
-              : "Update category details"}
+            {mode === "create" ? "Create a new product category" : "Update category details"}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          {/* Name */}
           <Input
             label="Category Name"
             placeholder="e.g. Prayer Essentials"
@@ -131,13 +117,10 @@ export function CategoryForm({
             {...register("name")}
           />
 
-          {/* Description */}
           <div className="space-y-1.5">
             <label className="text-xs uppercase tracking-widest text-brand-stone font-sans">
               Description
-              <span className="normal-case tracking-normal text-brand-stone/60 ml-1">
-                (optional)
-              </span>
+              <span className="normal-case tracking-normal text-brand-stone/60 ml-1">(optional)</span>
             </label>
             <textarea
               placeholder="Short description of this category..."
@@ -150,13 +133,10 @@ export function CategoryForm({
             )}
           </div>
 
-          {/* Parent category */}
           <div className="space-y-1.5">
             <label className="text-xs uppercase tracking-widest text-brand-stone font-sans">
               Parent Category
-              <span className="normal-case tracking-normal text-brand-stone/60 ml-1">
-                (optional)
-              </span>
+              <span className="normal-case tracking-normal text-brand-stone/60 ml-1">(optional)</span>
             </label>
             <SimpleSelect
               options={parentOptions}
@@ -169,7 +149,6 @@ export function CategoryForm({
             )}
           </div>
 
-          {/* Image URL */}
           <Input
             label="Image URL"
             placeholder="https://..."
@@ -177,7 +156,6 @@ export function CategoryForm({
             {...register("image")}
           />
 
-          {/* Position */}
           <Input
             label="Display Order"
             type="number"
@@ -189,11 +167,22 @@ export function CategoryForm({
             })}
           />
 
+          <div className="flex items-center justify-between rounded-lg border border-brand-beige-dark bg-brand-cream px-4 py-3">
+            <div>
+              <p className="text-sm font-sans text-brand-charcoal">Featured on Homepage</p>
+              <p className="text-xs text-brand-stone font-sans mt-0.5">
+                Show in the &quot;Our Collections&quot; section
+              </p>
+            </div>
+            <Switch
+              checked={isFeatured ?? false}
+              onCheckedChange={(val) => setValue("isFeatured", val)}
+            />
+          </div>
+
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline" disabled={isLoading}>
-                Cancel
-              </Button>
+              <Button type="button" variant="outline" disabled={isLoading}>Cancel</Button>
             </DialogClose>
             <Button type="submit" variant="gold" loading={isLoading}>
               {mode === "create" ? "Create Category" : "Save Changes"}

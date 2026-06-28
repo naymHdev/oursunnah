@@ -417,6 +417,7 @@ export default function CategoriesPage() {
                 image: editTarget.image ?? undefined,
                 parentId: editTarget.parentId,
                 position: editTarget.position,
+                isFeatured: editTarget.isFeatured,
               }
             : undefined
         }

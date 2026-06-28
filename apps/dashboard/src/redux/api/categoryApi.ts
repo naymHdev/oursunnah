@@ -16,6 +16,7 @@ export type TCategory = {
   parentId: string | null;
   position: number;
   isActive: boolean;
+  isFeatured: boolean;
   children?: TCategory[];
   _count?: { products: number };
 };
@@ -45,40 +46,22 @@ const categoryApi = baseApi.injectEndpoints({
     }),
 
     createCategory: build.mutation<{ data: TCategory }, CreateCategoryInput>({
-      query: (body) => ({
-        url: "/categories",
-        method: "POST",
-        body,
-      }),
+      query: (body) => ({ url: "/categories", method: "POST", body }),
       invalidatesTags: [tagTypes.category],
     }),
 
-    updateCategory: build.mutation<
-      { data: TCategory },
-      { id: string; body: UpdateCategoryInput }
-    >({
-      query: ({ id, body }) => ({
-        url: `/categories/${id}`,
-        method: "PATCH",
-        body,
-      }),
+    updateCategory: build.mutation<{ data: TCategory }, { id: string; body: UpdateCategoryInput }>({
+      query: ({ id, body }) => ({ url: `/categories/${id}`, method: "PATCH", body }),
       invalidatesTags: [tagTypes.category],
     }),
 
     deleteCategory: build.mutation<void, string>({
-      query: (id) => ({
-        url: `/categories/${id}`,
-        method: "DELETE",
-      }),
+      query: (id) => ({ url: `/categories/${id}`, method: "DELETE" }),
       invalidatesTags: [tagTypes.category],
     }),
 
     reorderCategories: build.mutation<void, ReorderCategoriesInput>({
-      query: (body) => ({
-        url: "/categories/reorder",
-        method: "PATCH",
-        body,
-      }),
+      query: (body) => ({ url: "/categories/reorder", method: "PATCH", body }),
       invalidatesTags: [tagTypes.category],
     }),
   }),

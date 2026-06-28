@@ -6,18 +6,20 @@ import Testimonials from '@/components/Testimonials';
 import EditorialSection from '@/components/EditorialSection';
 import Newsletter from '@/components/Newsletter';
 import Footer from '@/components/Footer';
-import { getCategoryTree } from '@/lib/api/server';
+import { getCategoryTree, getFeaturedCategories } from '@/lib/api/server';
 
 export default async function Home() {
-  const categories = await getCategoryTree();
-  // console.log("categories_______", categories);
+  const [categories, featuredCategories] = await Promise.all([
+    getCategoryTree(),
+    getFeaturedCategories(),
+  ]);
 
   return (
     <div className="min-h-screen bg-brand-cream">
       <Navbar categories={categories} />
       <main>
         <Hero />
-        <Collections />
+        <Collections categories={featuredCategories} />
         <FeaturedProducts />
         <Testimonials />
         <EditorialSection />

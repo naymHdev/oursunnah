@@ -164,3 +164,13 @@ export type AddCartItemPayload = {
 export type MergeCartPayload = {
   items: { productId: string; variantId?: string | null; quantity: number }[];
 };
+
+export type FeaturedCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+  position: number;
+  _count: { products: number };
+};

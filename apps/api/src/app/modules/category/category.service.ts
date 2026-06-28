@@ -43,6 +43,22 @@ const getCategoryTree = async () => {
   return buildCategoryTree(categories);
 };
 
+const getFeaturedCategories = async () => {
+  return prisma.category.findMany({
+    where: { isActive: true, isFeatured: true },
+    orderBy: { position: "asc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      image: true,
+      position: true,
+      _count: { select: { products: true } },
+    },
+  });
+};
+
 const getCategoryBySlug = async (slug: string) => {
   const category = await prisma.category.findUnique({
     where: { slug },
@@ -53,7 +69,6 @@ const getCategoryBySlug = async (slug: string) => {
     throw new AppError(404, "Category not found");
   }
 
-  // Walk up the parent chain to build a breadcrumb trail.
   const breadcrumb: { id: string; name: string; slug: string }[] = [];
   let currentParentId = category.parentId;
 
@@ -88,11 +103,9 @@ const updateCategory = async (id: string, payload: UpdateCategoryInput) => {
     slug = await generateUniqueSlug(payload.name, slugExists(id));
   }
 
-  // Delete old image from Cloudinary if new image is provided
   if (payload.image && existing.imagePublicId) {
     await UploadService.deleteSingleImage(existing.imagePublicId).catch((err) => {
       console.error(`Failed to delete old image for category ${id}:`, err);
-      // Continue with update even if image deletion fails
     });
   }
 
@@ -108,16 +121,12 @@ const deleteCategory = async (id: string) => {
     throw new AppError(404, "Category not found");
   }
 
-  // Delete category image from Cloudinary if it exists
   if (existing.imagePublicId) {
     await UploadService.deleteSingleImage(existing.imagePublicId).catch((err) => {
       console.error(`Failed to delete image for category ${id}:`, err);
-      // Continue with deletion even if image deletion fails
     });
   }
 
-  // Children automatically become root categories (parentId -> null)
-  // via the schema's onDelete: SetNull, rather than being deleted too.
   await prisma.category.delete({ where: { id } });
 };
 
@@ -135,6 +144,7 @@ const reorderCategories = async (payload: ReorderCategoriesInput) => {
 export const CategoryService = {
   createCategory,
   getCategoryTree,
+  getFeaturedCategories,
   getCategoryBySlug,
   updateCategory,
   deleteCategory,

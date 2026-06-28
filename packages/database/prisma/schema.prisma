@@ -16,13 +16,12 @@ enum AuthProvider {
   APPLE
 }
 
-
 enum UserRole {
   CUSTOMER
-  MANAGER      // orders & customers — read/update only
-  EDITOR       // products & categories — full CRUD
-  ADMIN        // all of the above
-  SUPER_ADMIN  // can create/demote other admins
+  MANAGER // orders & customers — read/update only
+  EDITOR // products & categories — full CRUD
+  ADMIN // all of the above
+  SUPER_ADMIN // can create/demote other admins
 }
 
 enum Gender {
@@ -51,30 +50,30 @@ enum PaymentStatus {
 // ---------- Auth ----------
 
 model User {
-  id            String         @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String
-  email         String         @unique
+  email         String    @unique
   password      String?
   phone         String?
   avatar        String?
   gender        Gender?
   dateOfBirth   DateTime?
-  role          UserRole        @default(CUSTOMER)
-  emailVerified Boolean        @default(false)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  role          UserRole  @default(CUSTOMER)
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  accounts      SocialAccount[]
-  refreshTokens RefreshToken[]
-  addresses     Address[]
-  cart          Cart?
-  orders        Order[]
-  deviceTokens  DeviceToken[]
-  productViews  ProductView[]
-  categoryInterests UserCategoryInterest[]
-  reviews       Review[]
-  reviewReactions ReviewReaction[]
-  reviewReplies ReviewReply[]
+  accounts             SocialAccount[]
+  refreshTokens        RefreshToken[]
+  addresses            Address[]
+  cart                 Cart?
+  orders               Order[]
+  deviceTokens         DeviceToken[]
+  productViews         ProductView[]
+  categoryInterests    UserCategoryInterest[]
+  reviews              Review[]
+  reviewReactions      ReviewReaction[]
+  reviewReplies        ReviewReply[]
   reviewReplyReactions ReviewReplyReaction[]
 
   @@map("users")
@@ -95,23 +94,23 @@ model SocialAccount {
 /// Doubles as a "session" record - one row per login. Kept (not deleted)
 /// on logout via `revokedAt` so login history is preserved.
 model RefreshToken {
-  id           String    @id @default(cuid())
-  token        String    @unique
-  userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  token  String @unique
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  ipAddress    String?
-  country      String?
-  city         String?
-  deviceType   String?   // mobile | desktop | tablet
-  browser      String?
-  os           String?
+  ipAddress  String?
+  country    String?
+  city       String?
+  deviceType String? // mobile | desktop | tablet
+  browser    String?
+  os         String?
 
   lastActiveAt DateTime  @default(now())
   revokedAt    DateTime?
 
-  expiresAt    DateTime
-  createdAt    DateTime  @default(now())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 
   @@map("refresh_tokens")
 }
@@ -130,7 +129,7 @@ model Address {
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
 
-  orders     Order[]
+  orders Order[]
 
   @@map("addresses")
 }
@@ -138,55 +137,56 @@ model Address {
 // ---------- Catalog ----------
 
 model Category {
-  id            String     @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
-  slug          String     @unique
+  slug          String   @unique
   description   String?
   image         String?
   imagePublicId String?
-  position      Int        @default(0)
-  isActive      Boolean    @default(true)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  position      Int      @default(0)
+  isActive      Boolean  @default(true)
+  isFeatured    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  parentId      String?
-  parent        Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children      Category[] @relation("CategoryHierarchy")
+  parentId String?
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryHierarchy")
 
-  products      Product[]  @relation("ProductCategories")
+  products      Product[]              @relation("ProductCategories")
   userInterests UserCategoryInterest[]
 
   @@map("categories")
 }
 
 model Product {
-  id               String              @id @default(cuid())
+  id               String   @id @default(cuid())
   name             String
-  slug             String              @unique
+  slug             String   @unique
   shortDescription String?
   description      String
-  sku              String?             @unique
+  sku              String?  @unique
   brand            String?
-  price            Decimal             @db.Decimal(10, 2)
-  compareAtPrice   Decimal?            @db.Decimal(10, 2)
-  stock            Int                 @default(0)
-  isActive         Boolean             @default(true)
-  isFeatured       Boolean             @default(false)
+  price            Decimal  @db.Decimal(10, 2)
+  compareAtPrice   Decimal? @db.Decimal(10, 2)
+  stock            Int      @default(0)
+  isActive         Boolean  @default(true)
+  isFeatured       Boolean  @default(false)
   metaTitle        String?
   metaDescription  String?
 
-  categories       Category[]          @relation("ProductCategories")
-  images           ProductImage[]
-  options          ProductOption[]
-  variants         ProductVariant[]
-  attributes       ProductAttribute[]
-  cartItems        CartItem[]
-  orderItems       OrderItem[]
-  views            ProductView[]
-  reviews          Review[]
+  categories Category[]         @relation("ProductCategories")
+  images     ProductImage[]
+  options    ProductOption[]
+  variants   ProductVariant[]
+  attributes ProductAttribute[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  views      ProductView[]
+  reviews    Review[]
 
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("products")
 }
@@ -204,11 +204,11 @@ model ProductImage {
 
 /// A configurable option for a product, e.g. "Color", "Size", "Length".
 model ProductOption {
-  id        String              @id @default(cuid())
+  id        String               @id @default(cuid())
   productId String
-  product   Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
   name      String
-  position  Int                 @default(0)
+  position  Int                  @default(0)
   values    ProductOptionValue[]
 
   @@unique([productId, name])
@@ -217,11 +217,11 @@ model ProductOption {
 
 /// A single value for an option, e.g. "White" for "Color", "M" for "Size".
 model ProductOptionValue {
-  id       String          @id @default(cuid())
+  id       String           @id @default(cuid())
   optionId String
-  option   ProductOption   @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  option   ProductOption    @relation(fields: [optionId], references: [id], onDelete: Cascade)
   value    String
-  position Int             @default(0)
+  position Int              @default(0)
   variants ProductVariant[] @relation("VariantOptionValues")
 
   @@unique([optionId, value])
@@ -290,32 +290,32 @@ model CartItem {
 // ---------- Orders & Payment ----------
 
 model Order {
-  id           String        @id @default(cuid())
-  userId       String
-  user         User          @relation(fields: [userId], references: [id])
-  addressId    String
-  address      Address       @relation(fields: [addressId], references: [id])
-  items        OrderItem[]
-  payment      Payment?
-  status       OrderStatus   @default(PENDING)
-  subtotal     Decimal       @db.Decimal(10, 2)
-  total        Decimal       @db.Decimal(10, 2)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  addressId String
+  address   Address     @relation(fields: [addressId], references: [id])
+  items     OrderItem[]
+  payment   Payment?
+  status    OrderStatus @default(PENDING)
+  subtotal  Decimal     @db.Decimal(10, 2)
+  total     Decimal     @db.Decimal(10, 2)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   @@map("orders")
 }
 
 model OrderItem {
-  id         String          @id @default(cuid())
-  orderId    String
-  order      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId  String
-  product    Product         @relation(fields: [productId], references: [id])
-  variantId  String?
-  variant    ProductVariant? @relation(fields: [variantId], references: [id])
-  quantity   Int
-  unitPrice  Decimal         @db.Decimal(10, 2)
+  id        String          @id @default(cuid())
+  orderId   String
+  order     Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product         @relation(fields: [productId], references: [id])
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  quantity  Int
+  unitPrice Decimal         @db.Decimal(10, 2)
 
   @@map("order_items")
 }
@@ -391,15 +391,15 @@ enum ReactionType {
 /// averageRating & totalReviews are computed at query time from this
 /// table so they never drift out of sync with the actual data.
 model Review {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  rating    Int      // 1–5, validated in application layer
-  title     String?
-  body      String?
+  rating Int // 1–5, validated in application layer
+  title  String?
+  body   String?
 
   replies   ReviewReply[]
   reactions ReviewReaction[]
@@ -432,13 +432,13 @@ model ReviewReaction {
 /// parentId = someId → nested reply (reply to another reply)
 /// depth is not capped in schema; application layer limits to 3 levels.
 model ReviewReply {
-  id       String  @id @default(cuid())
+  id       String @id @default(cuid())
   reviewId String
-  review   Review  @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
   userId   String
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  body     String
+  body String
 
   parentId String?
   parent   ReviewReply?  @relation("ReplyHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
@@ -454,11 +454,11 @@ model ReviewReply {
 
 /// Reaction on a ReviewReply (LIKE only — simpler for nested comments).
 model ReviewReplyReaction {
-  id      String      @id @default(cuid())
+  id      String       @id @default(cuid())
   replyId String
-  reply   ReviewReply @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  reply   ReviewReply  @relation(fields: [replyId], references: [id], onDelete: Cascade)
   userId  String
-  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   type    ReactionType
 
   createdAt DateTime @default(now())
@@ -466,4 +466,3 @@ model ReviewReplyReaction {
   @@unique([replyId, userId, type])
   @@map("review_reply_reactions")
 }
-

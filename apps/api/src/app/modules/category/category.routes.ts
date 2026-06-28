@@ -12,9 +12,24 @@ router.get("/featured", CategoryController.getFeaturedCategories);
 router.get("/:slug", CategoryController.getCategoryBySlug);
 
 // Protected — EDITOR+
-router.post("/", auth("EDITOR"), validateRequest(CategoryValidation.createCategorySchema), CategoryController.createCategory);
-router.patch("/reorder", auth("EDITOR"), validateRequest(CategoryValidation.reorderCategoriesSchema), CategoryController.reorderCategories);
-router.patch("/:id", auth("EDITOR"), validateRequest(CategoryValidation.updateCategorySchema), CategoryController.updateCategory);
+router.post(
+  "/",
+  auth("EDITOR"),
+  validateRequest(CategoryValidation.createCategorySchema),
+  CategoryController.createCategory,
+);
+router.patch(
+  "/reorder",
+  auth("EDITOR"),
+  validateRequest(CategoryValidation.reorderCategoriesSchema),
+  CategoryController.reorderCategories,
+);
+router.patch(
+  "/:id",
+  auth(),
+  validateRequest(CategoryValidation.updateCategorySchema),
+  CategoryController.updateCategory,
+);
 router.delete("/:id", auth("ADMIN"), CategoryController.deleteCategory);
 
 export const CategoryRoutes = router;

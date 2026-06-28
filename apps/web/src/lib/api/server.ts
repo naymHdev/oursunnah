@@ -5,6 +5,7 @@ import type {
   ApiResponse,
   Category,
   CategoryTreeNode,
+  ProductDetail,
   ProductListItem,
   ProductQueryParams,
 } from "@/types/catalog";
@@ -110,5 +111,18 @@ export async function getFeaturedCategories(): Promise<FeaturedCategory[]> {
     return data ?? [];
   } catch {
     return [];
+  }
+}
+
+export async function getProductBySlug(slug: string): Promise<ProductDetail | null> {
+  try {
+    const response = await fetch(`${API_URL}/api/v1/products/${slug}`, {
+      next: { revalidate: 60 },
+    });
+    if (!response.ok) return null;
+    const { data }: ApiResponse<ProductDetail> = await response.json();
+    return data ?? null;
+  } catch {
+    return null;
   }
 }

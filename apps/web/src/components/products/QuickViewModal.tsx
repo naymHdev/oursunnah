@@ -1,83 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Heart, Star, ShoppingBag } from 'lucide-react';
+import { X, Heart, Star, ShoppingBag } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { closeQuickView, selectQuickViewSlug } from '@/lib/redux/slices/quickViewSlice';
 import { toggleWishlist, selectIsWishlisted } from '@/lib/redux/slices/wishlistSlice';
 import { useGetProductBySlugQuery } from '@/lib/redux/api/productApi';
 import { useAddToCart } from '@/lib/cart/useAddToCart';
-import type { ProductOption, ProductVariant } from '@/types/catalog';
-
-/**
- * Self-contained image carousel — kept inside this file since Quick View
- * is currently its only consumer, but it takes nothing but a string[],
- * so lifting it into its own file later (e.g. for the product detail
- * page) is a one-line import change, not a rewrite.
- */
-function ImageCarousel({ images, alt }: { images: string[]; alt: string }) {
-  const [index, setIndex] = useState(0);
-  const safeImages = images.length > 0 ? images : ['/placeholder.jpg'];
-
-  const go = (delta: number) =>
-    setIndex((i) => (i + delta + safeImages.length) % safeImages.length);
-
-  return (
-    <div className="relative bg-brand-beige h-full min-h-[360px]">
-      <img
-        src={safeImages[index]}
-        alt={alt}
-        className="w-full h-full object-cover absolute inset-0"
-      />
-
-      {safeImages.length > 1 && (
-        <>
-          <button
-            onClick={() => go(-1)}
-            aria-label="Previous image"
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-brand-cream/90 flex items-center justify-center text-brand-charcoal/70 hover:text-brand-charcoal transition-colors duration-300"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <button
-            onClick={() => go(1)}
-            aria-label="Next image"
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-brand-cream/90 flex items-center justify-center text-brand-charcoal/70 hover:text-brand-charcoal transition-colors duration-300"
-          >
-            <ChevronRight size={18} />
-          </button>
-
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-            {safeImages.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setIndex(i)}
-                aria-label={`View image ${i + 1}`}
-                className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                  i === index ? 'bg-brand-charcoal' : 'bg-brand-charcoal/30'
-                }`}
-              />
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-/** Finds the variant matching every currently-selected option value, if any. */
-function findMatchingVariant(
-  variants: ProductVariant[],
-  selected: Record<string, string>
-): ProductVariant | null {
-  if (variants.length === 0) return null;
-  return (
-    variants.find((variant) => {
-      const variantValueIds = variant.optionValues.map((v) => v.id);
-      return Object.values(selected).every((valueId) => variantValueIds.includes(valueId));
-    }) ?? null
-  );
-}
+import { findMatchingVariant } from '@/lib/products/variant';
+import ImageCarousel from './ImageCarousel';
+import ProductOptionsSelector from './ProductOptionsSelector';
 
 export default function QuickViewModal() {
   const dispatch = useAppDispatch();
@@ -197,39 +129,15 @@ export default function QuickViewModal() {
                 </p>
               )}
 
-              {/* Option selectors (size, color, etc.) */}
               {product.options.length > 0 && (
-                <div className="mt-6 space-y-4">
-                  {product.options.map((option: ProductOption) => (
-                    <div key={option.id}>
-                      <p className="text-label uppercase tracking-widest text-brand-charcoal/70 mb-2">
-                        {option.name}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {option.values.map((value) => {
-                          const isSelected = selectedOptions[option.id] === value.id;
-                          return (
-                            <button
-                              key={value.id}
-                              onClick={() =>
-                                setSelectedOptions((prev) => ({
-                                  ...prev,
-                                  [option.id]: value.id,
-                                }))
-                              }
-                              className={`px-3 py-1.5 text-sm border transition-colors duration-300 ${
-                                isSelected
-                                  ? 'bg-brand-charcoal text-brand-cream border-brand-charcoal'
-                                  : 'text-brand-charcoal/70 border-brand-charcoal/20 hover:border-brand-charcoal/50'
-                              }`}
-                            >
-                              {value.value}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
+                <div className="mt-6">
+                  <ProductOptionsSelector
+                    options={product.options}
+                    selected={selectedOptions}
+                    onChange={(optionId, valueId) =>
+                      setSelectedOptions((prev) => ({ ...prev, [optionId]: valueId }))
+                    }
+                  />
                 </div>
               )}
 

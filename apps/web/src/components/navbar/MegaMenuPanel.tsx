@@ -7,38 +7,12 @@ import { CategoryImage } from "./CategoryImage";
 type MegaMenuPanelProps = {
   categories: CategoryTreeNode[];
   open: boolean;
-  /** Pixel offset from the top of the viewport — the live header
-   * height, measured in Navbar via ResizeObserver, so the panel
-   * always sits flush under the header regardless of scrolled /
-   * announcement-bar state. */
+  /** Live pixel height of the entire fixed header block (announcement
+   *  bar + nav row). Measured via ResizeObserver in Navbar so this is
+   *  always accurate — no hardcoded offsets, no flicker. */
   topOffset: number;
 };
 
-/**
- * Full-width editorial mega menu ("Option C").
- *
- * Replaces the old hover-flyout two-pane drawer. Instead of revealing
- * depth through hover-and-guess, all three category levels for the
- * active root are visible at once:
- *
- *   Level 1 — a row of tabs across the top (the roots)
- *   Level 2 — columns beneath the active tab
- *   Level 3 — a short list under each column
- *
- * Switching which root is active still happens on hover (fast
- * browsing, no extra click), but nothing below that is hidden behind
- * hover/expand — the full subtree of whichever root is active is
- * always fully rendered. This is deliberately calmer and more
- * "boutique" than a flyout: the customer sees the whole shape of the
- * catalog at a glance instead of discovering it by accident.
- *
- * Visual language stays restrained — a single rotated-square
- * ("geometric diamond") motif marks the active tab and closes the
- * panel, echoing Islamic geometric ornament without becoming
- * decorative clutter. No drop shadows beyond the existing `shadow-nav`
- * token, no gradients, no icon set — just type, gold hairlines, and
- * whitespace.
- */
 export function MegaMenuPanel({ categories, open, topOffset }: MegaMenuPanelProps) {
   const [activeId, setActiveId] = useState<string | null>(categories[0]?.category.id ?? null);
 
@@ -48,6 +22,10 @@ export function MegaMenuPanel({ categories, open, topOffset }: MegaMenuPanelProp
   const columns = active.children;
 
   return (
+    // FIX: z-40 kept (below navbar wrapper z-50, above page content).
+    // top is driven by the live headerHeight so it always lands flush
+    // under the header regardless of whether the announcement bar is
+    // visible or collapsed.
     <div
       style={{ top: topOffset }}
       className={`fixed left-0 right-0 z-40 transition-all duration-300 ease-luxury ${
@@ -95,7 +73,7 @@ export function MegaMenuPanel({ categories, open, topOffset }: MegaMenuPanelProp
             })}
           </nav>
 
-          {/* Level 2 + 3 — full subtree of the active root, all visible at once */}
+          {/* Level 2 + 3 */}
           <div className="py-9">
             {columns.length === 0 ? (
               <a
@@ -147,7 +125,7 @@ export function MegaMenuPanel({ categories, open, topOffset }: MegaMenuPanelProp
             )}
           </div>
 
-          {/* Quiet closing ornament — not a CTA, just a calm full stop */}
+          {/* Closing ornament */}
           <div className="flex items-center justify-center gap-3 pb-6" aria-hidden="true">
             <span className="w-10 h-px bg-brand-gold/30" />
             <span className="w-2 h-2 border border-brand-gold/50 rotate-45" />

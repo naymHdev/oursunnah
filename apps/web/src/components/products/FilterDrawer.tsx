@@ -1,17 +1,21 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { ChevronRight, SlidersHorizontal, X } from 'lucide-react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import type { CategoryTreeNode } from '@/types/catalog';
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { ChevronRight, SlidersHorizontal, X } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { CategoryTreeNode } from "@/types/catalog";
 
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Newest' },
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
+  { value: "newest", label: "Newest" },
+  { value: "price_asc", label: "Price: Low to High" },
+  { value: "price_desc", label: "Price: High to Low" },
 ];
 
-function findCategoryPath(nodes: CategoryTreeNode[], slug: string): CategoryTreeNode[] | null {
+function findCategoryPath(
+  nodes: CategoryTreeNode[],
+  slug: string,
+): CategoryTreeNode[] | null {
   for (const node of nodes) {
     if (node.category.slug === slug) return [node];
     const childPath = findCategoryPath(node.children, slug);
@@ -54,8 +58,8 @@ function CategoryTree({
     <ul
       className={
         depth === 0
-          ? 'space-y-1'
-          : 'mt-1 space-y-1 border-l border-brand-charcoal/10 pl-3'
+          ? "space-y-1"
+          : "mt-1 space-y-1 border-l border-brand-charcoal/10 pl-3"
       }
     >
       {nodes.map((node) => {
@@ -79,7 +83,9 @@ function CategoryTree({
                 </span>
                 <span
                   className={`min-w-0 flex-1 truncate text-[10px] leading-none uppercase tracking-[0.18em] transition-colors duration-300 ${
-                    isSelected ? 'text-brand-charcoal' : 'text-brand-charcoal/75'
+                    isSelected
+                      ? "text-brand-charcoal"
+                      : "text-brand-charcoal/75"
                   }`}
                 >
                   {node.category.name}
@@ -90,14 +96,14 @@ function CategoryTree({
                 <button
                   type="button"
                   onClick={() => onToggleExpand(node.category.slug)}
-                  aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${node.category.name}`}
+                  aria-label={`${isExpanded ? "Collapse" : "Expand"} ${node.category.name}`}
                   aria-expanded={isExpanded}
                   className="flex h-4 w-4 shrink-0 items-center justify-center text-brand-charcoal/45 transition-colors duration-300 hover:text-brand-charcoal"
                 >
                   <ChevronRight
                     size={12}
                     strokeWidth={1.5}
-                    className={`transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`}
+                    className={`transition-transform duration-300 ${isExpanded ? "rotate-90" : ""}`}
                   />
                 </button>
               )}
@@ -140,20 +146,24 @@ export default function FilterDrawer({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [sort, setSort] = useState(searchParams.get('sort') ?? 'newest');
-  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') ?? '');
-  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') ?? '');
-  const [hideSoldOut, setHideSoldOut] = useState(searchParams.get('hideSoldOut') === '1');
-  const [category, setCategory] = useState(activeCategorySlug ?? searchParams.get('category') ?? '');
+  const [sort, setSort] = useState(searchParams.get("sort") ?? "newest");
+  const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") ?? "");
+  const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") ?? "");
+  const [hideSoldOut, setHideSoldOut] = useState(
+    searchParams.get("hideSoldOut") === "1",
+  );
+  const [category, setCategory] = useState(
+    activeCategorySlug ?? searchParams.get("category") ?? "",
+  );
   const [expandedSlugs, setExpandedSlugs] = useState<Set<string>>(new Set());
 
   // Keep local state in sync if the URL changes externally (e.g. back/forward nav)
   useEffect(() => {
-    setSort(searchParams.get('sort') ?? 'newest');
-    setMinPrice(searchParams.get('minPrice') ?? '');
-    setMaxPrice(searchParams.get('maxPrice') ?? '');
-    setHideSoldOut(searchParams.get('hideSoldOut') === '1');
-    setCategory(activeCategorySlug ?? searchParams.get('category') ?? '');
+    setSort(searchParams.get("sort") ?? "newest");
+    setMinPrice(searchParams.get("minPrice") ?? "");
+    setMaxPrice(searchParams.get("maxPrice") ?? "");
+    setHideSoldOut(searchParams.get("hideSoldOut") === "1");
+    setCategory(activeCategorySlug ?? searchParams.get("category") ?? "");
   }, [searchParams, activeCategorySlug]);
 
   useEffect(() => {
@@ -165,41 +175,43 @@ export default function FilterDrawer({
     if (!open) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         event.preventDefault();
         closeDrawer();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
   const apply = () => {
     const params = new URLSearchParams();
-    if (sort !== 'newest') params.set('sort', sort);
-    if (minPrice) params.set('minPrice', minPrice);
-    if (maxPrice) params.set('maxPrice', maxPrice);
-    if (hideSoldOut) params.set('hideSoldOut', '1');
+    if (sort !== "newest") params.set("sort", sort);
+    if (minPrice) params.set("minPrice", minPrice);
+    if (maxPrice) params.set("maxPrice", maxPrice);
+    if (hideSoldOut) params.set("hideSoldOut", "1");
 
     if (activeCategorySlug !== undefined) {
-      const target = category ? `/category/${category}` : '/products';
+      const target = category ? `/category/${category}` : "/products";
       router.push(`${target}?${params.toString()}`);
     } else {
-      if (category) params.set('category', category);
+      if (category) params.set("category", category);
       router.push(`${pathname}?${params.toString()}`);
     }
     setOpen(false);
   };
 
   const reset = () => {
-    setSort('newest');
-    setMinPrice('');
-    setMaxPrice('');
+    setSort("newest");
+    setMinPrice("");
+    setMaxPrice("");
     setHideSoldOut(false);
-    setCategory(activeCategorySlug ?? '');
+    setCategory(activeCategorySlug ?? "");
     setExpandedSlugs(new Set());
-    router.push(activeCategorySlug ? `/category/${activeCategorySlug}` : pathname);
+    router.push(
+      activeCategorySlug ? `/category/${activeCategorySlug}` : pathname,
+    );
     setOpen(false);
   };
 
@@ -214,6 +226,10 @@ export default function FilterDrawer({
 
   const closeDrawer = () => setOpen(false);
 
+  // Portal needs the DOM to be ready — isMounted guards SSR.
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
   return (
     <>
       <button
@@ -224,13 +240,18 @@ export default function FilterDrawer({
         Filter
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-[60] flex justify-end">
-          <div className="absolute inset-0 bg-brand-charcoal/40" onClick={closeDrawer} />
+      {open && isMounted && createPortal(
+        <div className="fixed inset-0 z-[70] flex justify-end">
+          <div
+            className="absolute inset-0 bg-brand-charcoal/40"
+            onClick={closeDrawer}
+          />
 
           <div className="relative h-full w-full max-w-sm overflow-y-auto bg-brand-cream shadow-xl animate-in slide-in-from-right duration-300">
-            <div className="sticky top-0 z-[61] flex items-center justify-between border-b border-brand-charcoal/10 bg-brand-cream p-6">
-              <h2 className="font-serif text-xl text-brand-charcoal">Filter &amp; Sort</h2>
+            <div className="sticky top-0 z-[71] flex items-center justify-between border-b border-brand-charcoal/10 bg-brand-cream p-6">
+              <h2 className="font-serif text-xl text-brand-charcoal">
+                Filter &amp; Sort
+              </h2>
               <button
                 type="button"
                 onPointerDown={(e) => {
@@ -241,7 +262,10 @@ export default function FilterDrawer({
                 aria-label="Close"
                 className="relative z-20 -mr-2 flex h-10 w-10 items-center justify-center pointer-events-auto text-brand-charcoal/60 transition-colors duration-300 hover:text-brand-charcoal"
               >
-                <X size={20} className="pointer-events-none text-brand-charcoal/60" />
+                <X
+                  size={20}
+                  className="pointer-events-none text-brand-charcoal/60"
+                />
               </button>
             </div>
 
@@ -252,7 +276,10 @@ export default function FilterDrawer({
                 </legend>
                 <div className="space-y-2.5">
                   {SORT_OPTIONS.map((opt) => (
-                    <label key={opt.value} className="flex items-center gap-3 cursor-pointer">
+                    <label
+                      key={opt.value}
+                      className="flex items-center gap-3 cursor-pointer"
+                    >
                       <input
                         type="radio"
                         name="sort"
@@ -264,7 +291,9 @@ export default function FilterDrawer({
                       <span className="flex h-4 w-4 shrink-0 items-center justify-center border border-brand-charcoal/35 bg-transparent transition-colors duration-300 peer-checked:border-brand-charcoal peer-checked:bg-brand-charcoal">
                         <span className="h-1.5 w-1.5 scale-0 bg-brand-cream transition-transform duration-300 peer-checked:scale-100" />
                       </span>
-                      <span className="text-body-md text-brand-charcoal/80">{opt.label}</span>
+                      <span className="text-body-md text-brand-charcoal/80">
+                        {opt.label}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -280,14 +309,16 @@ export default function FilterDrawer({
                     <input
                       type="radio"
                       name="category"
-                      checked={category === ''}
-                      onChange={() => setCategory('')}
+                      checked={category === ""}
+                      onChange={() => setCategory("")}
                       className="sr-only peer"
                     />
                     <span className="flex h-4 w-4 shrink-0 items-center justify-center border border-brand-charcoal/35 bg-transparent transition-colors duration-300 peer-checked:border-brand-charcoal peer-checked:bg-brand-charcoal">
                       <span className="h-1.5 w-1.5 scale-0 bg-brand-cream transition-transform duration-300 peer-checked:scale-100" />
                     </span>
-                    <span className="text-body-md text-brand-charcoal/80">All Categories</span>
+                    <span className="text-body-md text-brand-charcoal/80">
+                      All Categories
+                    </span>
                   </label>
 
                   <CategoryTree
@@ -336,7 +367,9 @@ export default function FilterDrawer({
                 <span className="flex h-4 w-4 shrink-0 items-center justify-center border border-brand-charcoal/35 bg-transparent transition-colors duration-300 peer-checked:border-brand-charcoal peer-checked:bg-brand-charcoal">
                   <span className="h-1.5 w-1.5 scale-0 bg-brand-cream transition-transform duration-300 peer-checked:scale-100" />
                 </span>
-                <span className="text-body-md text-brand-charcoal/80">Hide Sold Out Products</span>
+                <span className="text-body-md text-brand-charcoal/80">
+                  Hide Sold Out Products
+                </span>
               </label>
             </div>
 
@@ -355,7 +388,8 @@ export default function FilterDrawer({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

@@ -75,6 +75,8 @@ model User {
   reviewReactions      ReviewReaction[]
   reviewReplies        ReviewReply[]
   reviewReplyReactions ReviewReplyReaction[]
+  journalPosts         JournalPost[]
+  journalComments      JournalComment[]
 
   @@map("users")
 }
@@ -467,4 +469,83 @@ model ReviewReplyReaction {
 
   @@unique([replyId, userId, type])
   @@map("review_reply_reactions")
+}
+
+// ---------- Editorial / Journal ----------
+
+enum JournalStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum JournalCategory {
+  STYLE_GUIDE
+  HOME_LIVING
+  HERITAGE
+  WELLNESS
+  CULTURE
+  COMMUNITY
+  PRODUCT_STORY
+  CRAFTMANSHIP
+}
+
+model JournalPost {
+  id            String  @id @default(cuid())
+  title         String
+  slug          String  @unique(map: "journal_posts_slug_unique")
+  excerpt       String
+  content       String  @db.Text // Rich HTML or Markdown from TipTap
+  featuredImage String // Cloudinary URL
+  imagePublicId String?
+
+  category JournalCategory
+  authorId String
+  author   User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  status          JournalStatus @default(DRAFT)
+  publishedAt     DateTime?
+  readTimeMinutes Int           @default(5)
+
+  // Islamic calendar metadata
+  hijriMonth String? // Ramadan, Sha'ban, etc.
+  hijriYear  Int? // 1446, 1447, etc.
+
+  tags           String[] @default([]) // Array of tag strings
+  seoTitle       String?
+  seoDescription String?
+
+  views    Int              @default(0)
+  comments JournalComment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([category])
+  @@map("journal_posts")
+}
+
+model JournalComment {
+  id     String      @id @default(cuid())
+  postId String
+  post   JournalPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  body String
+
+  parentId String?
+  parent   JournalComment?  @relation("CommentHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  JournalComment[] @relation("CommentHierarchy")
+
+  status String @default("pending") // pending, approved, spam
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("journal_comments")
 }

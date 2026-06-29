@@ -26,7 +26,6 @@ import {
   useDeleteCategoryMutation,
   type TCategoryTree,
 } from "@/redux/api/categoryApi";
-import type { CreateCategoryInput, UpdateCategoryInput } from "@our-sunnah/validation";
 
 type CategoryStats = {
   roots: number;
@@ -241,16 +240,16 @@ export default function CategoriesPage() {
     setDeleteTarget(cat);
   };
 
-  const handleCreate = async (payload: CreateCategoryInput) => {
-    await createCategory(payload).unwrap();
+  const handleCreate = async (formData: FormData) => {
+    await createCategory(formData).unwrap();
     setFormOpen(false);
   };
 
-  const handleUpdate = async (payload: CreateCategoryInput) => {
+  const handleUpdate = async (formData: FormData) => {
     if (!editTarget) return;
     await updateCategory({
       id: editTarget.id,
-      body: payload as UpdateCategoryInput,
+      body: formData,
     }).unwrap();
     setFormOpen(false);
     setEditTarget(null);
@@ -265,10 +264,9 @@ export default function CategoriesPage() {
   const handleToggleActive = async (cat: TCategoryTree) => {
     setIsTogglingId(cat.id);
     try {
-      await updateCategory({
-        id: cat.id,
-        body: { isActive: !cat.isActive },
-      }).unwrap();
+      const fd = new FormData();
+      fd.append("data", JSON.stringify({ isActive: !cat.isActive }));
+      await updateCategory({ id: cat.id, body: fd }).unwrap();
     } finally {
       setIsTogglingId(null);
     }

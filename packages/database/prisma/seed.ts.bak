@@ -9,7 +9,6 @@ import bcrypt from "bcryptjs";
 import { PrismaClient } from "../generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import CATEGORY_SEED_DATA from "./seeds/category-seed.js";
-import JOURNAL_POST_SEED_DATA from "./seeds/journal-seed.js";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" }),
@@ -358,7 +357,7 @@ async function seedCategories() {
     for (const category of CATEGORY_SEED_DATA) {
       if (category.parentId && !categoryIds.has(category.parentId)) {
         throw new Error(
-          `Parent category not found for ${category.id}: ${category.parentId}`,
+          `Parent category not found for ${category.id}: ${category.parentId}`
         );
       }
     }
@@ -377,9 +376,7 @@ async function seedCategories() {
     });
 
     const totalCount = await prisma.category.count();
-    const rootCount = await prisma.category.count({
-      where: { parentId: null },
-    });
+    const rootCount = await prisma.category.count({ where: { parentId: null } });
 
     console.log(`✅  Created ${result.count} categories`);
     console.log(`    Total: ${totalCount} | Root: ${rootCount}\n`);
@@ -431,61 +428,11 @@ async function seedProducts() {
   console.log(`\n🎉  ${PRODUCTS.length} products seeded successfully!\n`);
 }
 
-async function seedJournalPosts() {
-  console.log(`📰  Seeding ${JOURNAL_POST_SEED_DATA.length} journal posts…\n`);
-
-  // Journal posts require an author — reuse the seeded SUPER_ADMIN account
-  const author = await prisma.user.findUnique({
-    where: { email: ADMIN_EMAIL },
-    select: { id: true },
-  });
-
-  if (!author) {
-    throw new Error(
-      "Cannot seed journal posts: SUPER_ADMIN not found. Run seedAdmin() first.",
-    );
-  }
-
-  for (const post of JOURNAL_POST_SEED_DATA) {
-    const created = await prisma.journalPost.upsert({
-      where: { slug: post.slug },
-      update: {},
-      create: {
-        id: post.id,
-        title: post.title,
-        slug: post.slug,
-        excerpt: post.excerpt,
-        content: post.content,
-        featuredImage: post.featuredImage,
-        imagePublicId: post.imagePublicId,
-        category: post.category,
-        authorId: author.id,
-        status: post.status,
-        publishedAt: post.status === "PUBLISHED" ? new Date() : null,
-        readTimeMinutes: post.readTimeMinutes,
-        hijriMonth: post.hijriMonth,
-        hijriYear: post.hijriYear,
-        tags: post.tags,
-        seoTitle: post.seoTitle,
-        seoDescription: post.seoDescription,
-      },
-    });
-
-    console.log(`✅  ${created.title}`);
-  }
-
-  console.log(
-    `\n🎉  ${JOURNAL_POST_SEED_DATA.length} journal posts seeded successfully!\n`,
-  );
-}
-
 async function main() {
   try {
     await seedAdmin();
     await seedCategories();
     await seedProducts();
-    await seedJournalPosts();
-
     console.log("✨  Database seeding complete!");
   } catch (e) {
     console.error("❌  Seed failed:", e);

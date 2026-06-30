@@ -77,6 +77,7 @@ model User {
   reviewReplyReactions ReviewReplyReaction[]
   journalPosts         JournalPost[]
   journalComments      JournalComment[]
+  newsletterSubscriptions NewsletterSubscriber[]
 
   @@map("users")
 }
@@ -548,4 +549,31 @@ model JournalComment {
   updatedAt DateTime @updatedAt
 
   @@map("journal_comments")
+}
+
+// ---------- Newsletter ("The Noor Circle") ----------
+
+enum NewsletterStatus {
+  ACTIVE
+  UNSUBSCRIBED
+}
+
+/// Homepage "Join Our Community" signups. Works for both guests and
+/// logged-in users — userId is attached when the subscriber is authenticated,
+/// but it's never required, since most signups happen pre-account.
+model NewsletterSubscriber {
+  id     String           @id @default(cuid())
+  email  String           @unique
+  status NewsletterStatus @default(ACTIVE)
+  source String? // e.g. "homepage_footer", "checkout", "blog"
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  unsubscribedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+  @@map("newsletter_subscribers")
 }

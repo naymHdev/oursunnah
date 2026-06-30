@@ -6,3 +6,5 @@ export * from "./user.schema";
 export * from "./cart.schema";
 export * from "./review.schema";
 
+export * from "./newsletter.schema";
+export * from "./journal.schema";

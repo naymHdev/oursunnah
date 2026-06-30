@@ -2,13 +2,25 @@
 
 import { useRef, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { ArrowRight, Mail } from 'lucide-react';
+import { ArrowRight, Mail, Loader2 } from 'lucide-react';
+import { useSubscribeNewsletterMutation } from '@/lib/redux/api/newsletterApi';
+
+/** Narrow type for the shape RTK Query's fetchBaseQuery error actually has. */
+type ApiError = { data?: { message?: string }; status?: number };
+
+const getErrorMessage = (error: unknown): string => {
+  const apiError = error as ApiError;
+  return apiError?.data?.message ?? 'Something went wrong. Please try again.';
+};
 
 export default function Newsletter() {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+
+  const [subscribeNewsletter, { isLoading, isSuccess, reset }] =
+    useSubscribeNewsletterMutation();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -19,12 +31,23 @@ export default function Newsletter() {
     return () => observer.disconnect();
   }, []);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (email) {
-      setSubmitted(true);
+    if (!email || isLoading) return;
+
+    setErrorMessage(null);
+
+    try {
+      await subscribeNewsletter({ email, source: 'homepage_footer' }).unwrap();
       setEmail('');
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error));
     }
+  };
+
+  const handleTryAgain = () => {
+    reset();
+    setErrorMessage(null);
   };
 
   return (
@@ -50,34 +73,77 @@ export default function Newsletter() {
             Receive exclusive collections, Ramadan gift guides, styling inspiration, and early access — delivered with care.
           </p>
 
-          {submitted ? (
+          {isSuccess ? (
             <div className="flex flex-col items-center gap-3 animate-fade-in">
               <div className="w-12 h-12 rounded-full bg-brand-emerald flex items-center justify-center">
                 <Mail size={20} className="text-brand-cream" />
               </div>
               <p className="font-serif text-2xl text-brand-charcoal">Ahlan wa Sahlan</p>
               <p className="text-brand-stone text-sm">Thank you for joining the Noor community.</p>
+              <button
+                onClick={handleTryAgain}
+                className="text-brand-gold text-label uppercase tracking-widest mt-2 hover:underline"
+              >
+                Use a different email
+              </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-3 max-w-lg mx-auto">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email address"
-                required
-                className="flex-1 w-full px-5 py-3.5 bg-transparent border border-brand-stone/30 text-brand-charcoal placeholder:text-brand-stone/50 font-sans text-sm focus:outline-none focus:border-brand-gold transition-colors duration-300"
-              />
-              <button type="submit" className="btn-primary shrink-0 group whitespace-nowrap">
-                Subscribe
-                <ArrowRight size={13} className="transition-transform duration-300 group-hover:translate-x-1" />
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+              className="flex flex-col sm:flex-row items-center gap-3 max-w-lg mx-auto"
+            >
+              <div className="flex-1 w-full">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                  placeholder="Your email address"
+                  required
+                  disabled={isLoading}
+                  aria-invalid={Boolean(errorMessage)}
+                  aria-describedby={errorMessage ? 'newsletter-error' : undefined}
+                  className={`w-full px-5 py-3.5 bg-transparent border text-brand-charcoal placeholder:text-brand-stone/50 font-sans text-sm focus:outline-none transition-colors duration-300 disabled:opacity-60 ${
+                    errorMessage
+                      ? 'border-red-400 focus:border-red-400'
+                      : 'border-brand-stone/30 focus:border-brand-gold'
+                  }`}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="btn-primary shrink-0 group whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-brand-emerald disabled:hover:shadow-none"
+              >
+                {isLoading ? (
+                  <>
+                    Subscribing
+                    <Loader2 size={13} className="animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    Subscribe
+                    <ArrowRight size={13} className="transition-transform duration-300 group-hover:translate-x-1" />
+                  </>
+                )}
               </button>
             </form>
           )}
 
-          <p className="text-brand-stone/50 text-label uppercase tracking-widest mt-5">
-            No spam, ever. Unsubscribe at any time.
-          </p>
+          {errorMessage && (
+            <p id="newsletter-error" role="alert" className="text-red-500 text-xs font-sans mt-3 animate-fade-in">
+              {errorMessage}
+            </p>
+          )}
+
+          {!isSuccess && (
+            <p className="text-brand-stone/50 text-label uppercase tracking-widest mt-5">
+              No spam, ever. Unsubscribe at any time.
+            </p>
+          )}
         </div>
       </div>
     </section>

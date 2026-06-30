@@ -23,6 +23,7 @@ export const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 export const CLOUDINARY_FOLDERS = {
   PRODUCTS: "our-sunnah/products",
   CATEGORIES: "our-sunnah/categories",
+  JOURNAL: "our-sunnah/journal",
 } as const;
 
 export const IMAGE_OPTIMIZATION = {

@@ -15,7 +15,7 @@ export class UploadService {
    */
   static async uploadSingleImage(
     file: Express.Multer.File,
-    type: "product" | "category",
+    type: "product" | "category" | "journal",
     productId?: string
   ) {
     if (!file) {
@@ -29,10 +29,12 @@ export class UploadService {
     }
 
     try {
-      const folder = 
+      const folder =
         type === "product"
           ? CLOUDINARY_FOLDERS.PRODUCTS
-          : CLOUDINARY_FOLDERS.CATEGORIES;
+          : type === "journal"
+            ? CLOUDINARY_FOLDERS.JOURNAL
+            : CLOUDINARY_FOLDERS.CATEGORIES;
 
       const result = await uploadToCloudinary(
         file.buffer,

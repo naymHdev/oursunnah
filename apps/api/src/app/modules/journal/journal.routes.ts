@@ -3,12 +3,16 @@ import { JournalController } from "./journal.controller.js";
 import validateRequest from "../../middleware/validateRequest.js";
 import auth from "../../middleware/auth.js";
 import optionalAuth from "../../middleware/optionalAuth.js";
-import { uploadSingle, handleMulterErrors } from "../upload/upload.middleware.js";
+import {
+  uploadSingle,
+  handleMulterErrors,
+} from "../upload/upload.middleware.js";
 import {
   createJournalCommentSchema,
   updateJournalCommentSchema,
   moderateCommentSchema,
 } from "@our-sunnah/validation";
+import { UserRole } from "@our-sunnah/database";
 
 const router = Router();
 
@@ -21,21 +25,25 @@ router.get("/:slug", optionalAuth(), JournalController.getPostBySlug);
 // Multipart: Content-Type: multipart/form-data, data field (JSON stringified) + image field (file)
 router.post(
   "/",
-  auth("EDITOR"),
+  auth(UserRole.EDITOR, UserRole.ADMIN, UserRole.SUPER_ADMIN),
   uploadSingle,
   handleMulterErrors,
-  JournalController.createPost
+  JournalController.createPost,
 );
 
 router.patch(
   "/:id",
-  auth("EDITOR"),
+  auth(UserRole.EDITOR, UserRole.ADMIN, UserRole.SUPER_ADMIN),
   uploadSingle,
   handleMulterErrors,
-  JournalController.updatePost
+  JournalController.updatePost,
 );
 
-router.delete("/:id", auth("EDITOR"), JournalController.deletePost);
+router.delete(
+  "/:id",
+  auth(UserRole.EDITOR, UserRole.ADMIN, UserRole.SUPER_ADMIN),
+  JournalController.deletePost,
+);
 
 // ── Comments — nested under /journal/:postId/comments ──────────────────────────
 
@@ -45,29 +53,29 @@ router.post(
   "/:postId/comments",
   auth(), // any logged-in user
   validateRequest(createJournalCommentSchema),
-  JournalController.createComment
+  JournalController.createComment,
 );
 
 router.patch(
   "/:postId/comments/:commentId",
   auth(), // service checks ownership; ADMIN/SUPER_ADMIN can edit any
   validateRequest(updateJournalCommentSchema),
-  JournalController.updateComment
+  JournalController.updateComment,
 );
 
 router.delete(
   "/:postId/comments/:commentId",
   auth(), // service checks ownership; ADMIN/SUPER_ADMIN can delete any
-  JournalController.deleteComment
+  JournalController.deleteComment,
 );
 
 // ── Comment moderation (EDITOR, ADMIN, SUPER_ADMIN) ─────────────────────────────
 
 router.patch(
   "/:postId/comments/:commentId/moderate",
-  auth("EDITOR"),
+  auth(UserRole.EDITOR, UserRole.ADMIN, UserRole.SUPER_ADMIN),
   validateRequest(moderateCommentSchema),
-  JournalController.moderateComment
+  JournalController.moderateComment,
 );
 
 export const JournalRoutes = router;

@@ -46,7 +46,11 @@ type CategoryNodeProps = {
 };
 
 function getCategoryStats(categories: TCategoryTree[]): CategoryStats {
-  const stats: CategoryStats = { roots: categories.length, total: 0, active: 0 };
+  const stats: CategoryStats = {
+    roots: categories.length,
+    total: 0,
+    active: 0,
+  };
 
   const walk = (items: TCategoryTree[]) => {
     for (const item of items) {
@@ -91,7 +95,13 @@ function CategoryNode({
   const currentPath = [...path, cat.name];
 
   return (
-    <div className={depth > 0 ? "pl-5 border-l border-dashed border-brand-beige-dark/70" : ""}>
+    <div
+      className={
+        depth > 0
+          ? "pl-5 border-l border-dashed border-brand-beige-dark/70"
+          : ""
+      }
+    >
       <div
         className={[
           "rounded-xl border border-brand-beige-dark bg-white/90 shadow-sm overflow-hidden",
@@ -109,7 +119,13 @@ function CategoryNode({
                 ? "border-brand-beige-dark bg-white text-brand-stone hover:border-brand-gold hover:text-brand-charcoal"
                 : "border-dashed border-brand-beige-dark/70 bg-brand-cream text-brand-stone/30 cursor-default",
             ].join(" ")}
-            title={hasChildren ? (isExpanded ? "Collapse subtree" : "Expand subtree") : "Leaf category"}
+            title={
+              hasChildren
+                ? isExpanded
+                  ? "Collapse subtree"
+                  : "Expand subtree"
+                : "Leaf category"
+            }
           >
             {hasChildren ? (
               isExpanded ? (
@@ -131,7 +147,9 @@ function CategoryNode({
                 {cat.isActive ? "Active" : "Inactive"}
               </Badge>
               <Badge variant="default">Level {depth + 1}</Badge>
-              {hasChildren && <Badge variant="default">{cat.children.length} children</Badge>}
+              {hasChildren && (
+                <Badge variant="default">{cat.children.length} children</Badge>
+              )}
             </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-sans text-brand-stone">
@@ -204,9 +222,12 @@ function CategoryNode({
 
 export default function CategoriesPage() {
   const { data, isLoading, isError } = useGetCategoryTreeQuery();
-  const [createCategory, { isLoading: isCreating }] = useCreateCategoryMutation();
-  const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
-  const [deleteCategory, { isLoading: isDeleting }] = useDeleteCategoryMutation();
+  const [createCategory, { isLoading: isCreating }] =
+    useCreateCategoryMutation();
+  const [updateCategory, { isLoading: isUpdating }] =
+    useUpdateCategoryMutation();
+  const [deleteCategory, { isLoading: isDeleting }] =
+    useDeleteCategoryMutation();
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
@@ -284,7 +305,8 @@ export default function CategoriesPage() {
     });
   };
 
-  const expandAll = () => setExpandedIds(new Set(collectCategoryIds(categories)));
+  const expandAll = () =>
+    setExpandedIds(new Set(collectCategoryIds(categories)));
   const collapseAll = () => setExpandedIds(new Set());
 
   return (

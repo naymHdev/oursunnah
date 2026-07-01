@@ -66,7 +66,7 @@ export function CategoryForm({
     defaultValues: {
       name: "",
       description: "",
-      image: "",
+      image: undefined,
       parentId: null,
       position: 0,
       isFeatured: false,
@@ -83,7 +83,7 @@ export function CategoryForm({
       reset({
         name: editValues.name ?? "",
         description: editValues.description ?? "",
-        image: editValues.image ?? "",
+        image: editValues.image ?? undefined,
         parentId: editValues.parentId ?? null,
         position: editValues.position ?? 0,
         isFeatured: editValues.isFeatured ?? false,
@@ -92,7 +92,14 @@ export function CategoryForm({
       setImagePreview(editValues.image ?? null);
       setImageFile(null);
     } else {
-      reset({ name: "", description: "", image: "", parentId: null, position: 0, isFeatured: false });
+      reset({
+        name: "",
+        description: "",
+        image: undefined,
+        parentId: null,
+        position: 0,
+        isFeatured: false,
+      });
       setImagePreview(null);
       setImageFile(null);
     }
@@ -108,7 +115,7 @@ export function CategoryForm({
   const removeImage = () => {
     setImageFile(null);
     setImagePreview(null);
-    setValue("image", "");
+    setValue("image", undefined);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -123,7 +130,11 @@ export function CategoryForm({
   const handleFormSubmit = async (data: CreateCategoryInput) => {
     const formData = new FormData();
     // Send JSON fields as "data" key — backend parses req.body.data
-    const payload = { ...data, parentId: data.parentId || null };
+    const payload = {
+      ...data,
+      parentId: data.parentId || null,
+      image: data.image || undefined,
+    };
     formData.append("data", JSON.stringify(payload));
     if (imageFile) {
       formData.append("image", imageFile);

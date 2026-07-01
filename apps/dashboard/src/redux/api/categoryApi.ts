@@ -56,7 +56,10 @@ const categoryApi = baseApi.injectEndpoints({
       invalidatesTags: [tagTypes.category],
     }),
 
-    updateCategory: build.mutation<{ data: TCategory }, { id: string; body: FormData }>({
+    updateCategory: build.mutation<
+      { data: TCategory },
+      { id: string; body: FormData }
+    >({
       query: ({ id, body }) => ({
         url: `/categories/${id}`,
         method: "PATCH",

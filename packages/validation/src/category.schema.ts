@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+const optionalImageUrl = z.preprocess((value) => value === "" ? undefined : value, z.string().url("Image must be a valid URL").optional());
+
 export const createCategorySchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional(),
-  image: z.string().url("Image must be a valid URL").optional(),
+  image: optionalImageUrl,
   imagePublicId: z.string().optional(),
   parentId: z.string().optional().nullable(),
   position: z.number().int().optional(),
